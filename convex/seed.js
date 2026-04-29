@@ -16,6 +16,7 @@ export const seedAdmin = mutation({
       name: "Super Admin",
       email: "nktecipl@gmail.com",
       password: "123456",
+      clickCount: 0,
       role: "admin",
     });
 
