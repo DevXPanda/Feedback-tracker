@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useRouter } from "next/navigation";
-import {
-  Users,
-  MousePointer2,
-  Map,
+import { 
+  Users, 
+  MousePointer2, 
+  Map, 
   TrendingUp,
   LayoutDashboard,
   Search,
@@ -40,7 +40,7 @@ export default function Dashboard() {
   }, [router]);
 
   // Fetch full user details to get live click count
-  const user = useQuery(api.users.getUserById,
+  const user = useQuery(api.users.getUserById, 
     storedUser?._id ? { userId: storedUser._id } : "skip"
   );
 
@@ -56,7 +56,7 @@ export default function Dashboard() {
   const totalTeams = teams.length;
   const uniqueWards = new Set(teams.map(t => t.ward)).size;
 
-  const trackingUrl = typeof window !== 'undefined'
+  const trackingUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/track?memberId=${user._id}`
     : "";
 
@@ -70,9 +70,9 @@ export default function Dashboard() {
               Welcome back, {user.name}. Here's your team performance overview.
             </p>
           </div>
-
+          
           <div className="flex items-center gap-3">
-            <button
+            <button 
               onClick={() => setIsShareModalOpen(true)}
               className="group flex h-12 items-center gap-3 px-4 bg-white border border-gray-200 rounded-xl hover:border-primary-200 hover:bg-primary-50 transition-all shadow-sm active:scale-95"
             >
@@ -89,16 +89,16 @@ export default function Dashboard() {
 
             <div className="relative flex-shrink-0">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search teams..."
+              <input 
+                type="text" 
+                placeholder="Search teams..." 
                 className="h-12 pl-11 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all w-48 sm:w-64 shadow-sm"
               />
             </div>
           </div>
         </header>
 
-        <ShareModal
+        <ShareModal 
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           trackingUrl={trackingUrl}
@@ -107,25 +107,25 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-10">
-          <StatCard
-            title="Total Clicks"
-            value={totalClicks}
-            icon={MousePointer2}
+          <StatCard 
+            title="Total Clicks" 
+            value={totalClicks} 
+            icon={MousePointer2} 
             iconColor="text-blue-600"
             iconBg="bg-blue-50"
             trend="+12% from yesterday"
           />
-          <StatCard
-            title="Active Teams"
-            value={totalTeams}
-            icon={Users}
+          <StatCard 
+            title="Active Teams" 
+            value={totalTeams} 
+            icon={Users} 
             iconColor="text-purple-600"
             iconBg="bg-purple-50"
           />
-          <StatCard
-            title="Covered Wards"
-            value={uniqueWards}
-            icon={Map}
+          <StatCard 
+            title="Covered Wards" 
+            value={uniqueWards} 
+            icon={Map} 
             iconColor="text-emerald-600"
             iconBg="bg-emerald-50"
           />
@@ -140,7 +140,7 @@ export default function Dashboard() {
                 Team Performance
               </h2>
             </div>
-
+            
             {teams.length === 0 ? (
               <div className="rounded-xl bg-white border border-gray-200 p-12 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 text-gray-300 mb-4">
