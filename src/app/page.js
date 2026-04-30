@@ -48,18 +48,18 @@ export default function Home() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-600"></span>
                 </span> */}
               </div>
-              <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-slate-900 font-display leading-[1.05] mb-8">
+              <h1 className="text-5xl sm:text-7xl font-semibold tracking-tight text-slate-900 leading-[1.05] mb-8">
                 Feedback Collection <br />
                 <span className="text-primary-600 bg-clip-text">Simplified.</span>
               </h1>
-              <p className="text-xl leading-relaxed text-slate-600 mb-10">
+              <p className="text-xl leading-relaxed text-slate-600 font-normal mb-10">
                 Empower your field teams to collect feedback efficiently. Track real-time progress, manage ward distribution, and gain actionable insights.
               </p>
               <div className="flex flex-wrap items-center gap-6">
                 {!user ? (
                   <button
                     onClick={openAuthModal}
-                    className="group px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-2xl font-bold font-display shadow-2xl shadow-gray-200 transition-all active:scale-[0.98] flex items-center gap-3"
+                    className="group px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-2xl font-semibold shadow-2xl shadow-gray-200 transition-all active:scale-[0.98] flex items-center gap-3"
                   >
                     Get Started Free
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -67,7 +67,7 @@ export default function Home() {
                 ) : (
                   <Link
                     href={user.role === "admin" ? "/dashboard" : "/team"}
-                    className="group px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-bold font-display shadow-2xl shadow-primary-100 transition-all active:scale-[0.98] flex items-center gap-3"
+                    className="group px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-semibold shadow-2xl shadow-primary-100 transition-all active:scale-[0.98] flex items-center gap-3"
                   >
                     Go to Workspace
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -137,8 +137,8 @@ export default function Home() {
       <section className="py-32 bg-white relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-20">
-            <h2 className="text-base font-bold text-primary-600 uppercase tracking-widest mb-4">Testimonials</h2>
-            <p className="text-4xl sm:text-5xl font-bold font-display text-slate-900 tracking-tight">
+            <h2 className="text-base font-semibold text-primary-600 uppercase tracking-widest mb-4">Testimonials</h2>
+            <p className="text-4xl sm:text-5xl font-semibold text-slate-900 tracking-tight leading-tight">
               Trusted by team leads <br /> across the country
             </p>
           </div>
@@ -167,24 +167,24 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 sm:py-32 overflow-hidden relative">
+      <section className="pt-20 sm:pt-32 pb-12 overflow-hidden relative">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="relative isolate overflow-hidden bg-slate-900 px-8 pt-16 shadow-2xl rounded-[3rem] sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0 border border-white/5">
             {/* Background Glow */}
             <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary-600/20 rounded-full blur-[100px] pointer-events-none" />
 
             <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-32 lg:text-left relative z-10">
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-5xl font-display leading-[1.1]">
+              <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl leading-[1.1]">
                 Ready to optimize <br />
                 <span className="text-primary-400">your team performance?</span>
               </h2>
-              <p className="mt-6 text-lg leading-8 text-slate-300">
+              <p className="mt-6 text-lg leading-relaxed text-slate-300 font-normal">
                 Join 2,000+ teams simplifying their field workflow. Secure, real-time, and mobile-optimized for every agent.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
                 <button
                   onClick={openAuthModal}
-                  className="rounded-2xl bg-white px-8 py-4 text-sm font-bold text-slate-900 shadow-xl hover:bg-slate-50 transition-all active:scale-95"
+                  className="rounded-2xl bg-white px-8 py-4 text-sm font-semibold text-slate-900 shadow-xl hover:bg-slate-50 transition-all active:scale-95"
                 >
                   Get Started Free
                 </button>
@@ -266,8 +266,8 @@ function FeatureCard({ icon: Icon, title, desc, delay }) {
         <Icon className="h-6 w-6" />
       </div>
       <div className="flex-grow">
-        <h3 className="text-lg font-bold font-display text-slate-900 mb-2">{title}</h3>
-        <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
+        <p className="text-slate-500 text-sm font-normal leading-relaxed">{desc}</p>
       </div>
     </div>
   );
@@ -276,8 +276,8 @@ function FeatureCard({ icon: Icon, title, desc, delay }) {
 function StatItem({ label, value }) {
   return (
     <div>
-      <p className="text-4xl font-bold text-gray-900 font-display mb-2">{value}</p>
-      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{label}</p>
+      <p className="text-4xl font-semibold text-gray-900 mb-2">{value}</p>
+      <p className="text-sm font-medium text-gray-400 uppercase tracking-widest">{label}</p>
     </div>
   );
 }
@@ -288,7 +288,7 @@ function TestimonialCard({ quote, author, role, avatar }) {
       <div className="absolute -top-4 left-10 h-8 w-8 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-100">
         <Quote className="h-4 w-4" />
       </div>
-      <p className="text-slate-600 leading-relaxed mb-8 text-lg font-medium">"{quote}"</p>
+      <p className="text-slate-600 leading-relaxed mb-8 text-lg font-normal italic">"{quote}"</p>
       <div className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-2xl bg-white border border-gray-100 overflow-hidden shadow-sm p-0.5">
           <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatar}`} alt={author} />

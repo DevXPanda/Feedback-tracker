@@ -4,16 +4,16 @@ import { Twitter, Github, Linkedin, Mail, Globe, ArrowRight } from "lucide-react
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#fcfcfd] pt-24 pb-12 border-t border-gray-100 mt-auto">
+    <footer className="w-full bg-[#fcfcfd] pt-6 pb-6 border-t border-gray-100 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between gap-12 mb-20">
+        <div className="flex flex-col md:flex-row justify-between gap-12 mb-6">
           <div className="max-w-md">
-            <Link href="/" className="flex items-center gap-2.5 mb-8">
+            <Link href="/" className="flex items-center gap-2.5 mb-4">
               <span className="text-xl font-bold font-display tracking-tight text-gray-900 block">
                 Feedback<span className="text-primary-600">Tracker</span>
               </span>
             </Link>
-            <p className="text-slate-500 max-w-sm mb-10 leading-relaxed">
+            <p className="text-slate-500 max-w-sm mb-6 leading-relaxed">
               Building the future of field-based feedback collection. We empower teams with real-time data and actionable insights.
             </p>
             <div className="flex gap-4">
@@ -26,8 +26,8 @@ export default function Footer() {
 
           <div className="flex flex-col sm:flex-row gap-16 md:gap-24 lg:gap-32">
             <div>
-              <h4 className="font-bold text-gray-900 mb-6 font-display text-sm tracking-tight">Product</h4>
-              <ul className="space-y-4 text-sm text-slate-500 font-medium">
+              <h4 className="font-bold text-gray-900 mb-4 font-display text-sm tracking-tight">Product</h4>
+              <ul className="space-y-3 text-sm text-slate-500 font-medium">
                 <li><FooterLink label="Features" /></li>
                 <li><FooterLink label="Analytics" /></li>
                 <li><FooterLink label="Security" /></li>
@@ -35,8 +35,8 @@ export default function Footer() {
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-gray-900 mb-6 font-display text-sm tracking-tight">Company</h4>
-              <ul className="space-y-4 text-sm text-slate-500 font-medium">
+              <h4 className="font-bold text-gray-900 mb-4 font-display text-sm tracking-tight">Company</h4>
+              <ul className="space-y-3 text-sm text-slate-500 font-medium">
                 <li><FooterLink label="About Us" /></li>
                 <li><FooterLink label="Contact" /></li>
                 <li><FooterLink label="Privacy Policy" /></li>
@@ -45,7 +45,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="pt-8 border-t border-gray-200/60 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="pt-4 border-t border-gray-200/60 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-xs text-slate-400 font-medium tracking-tight">
             &copy; {new Date().getFullYear()} FeedbackTracker. All rights reserved.
           </p>
