@@ -24,7 +24,7 @@ export default function TeamPanel() {
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (!storedUser || storedUser.role !== "team") {
-      router.push("/login");
+      router.push("/");
     } else {
       setUser(storedUser);
     }
@@ -99,137 +99,139 @@ export default function TeamPanel() {
   const performance = (memberStats?.todayClicks || 0) > 5 ? "Excellent" : (memberStats?.todayClicks || 0) > 0 ? "Good" : "Neutral";
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] flex flex-col items-center p-6 py-16 sm:py-24">
-      <div className="w-full max-w-xl text-center space-y-10">
-        {/* Header Section */}
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-[11px] font-semibold uppercase tracking-wider">
-              <div className={`h-1.5 w-1.5 rounded-full ${performance === 'Excellent' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : performance === 'Good' ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
-              <span>Performance: {performance}</span>
-            </div>
-            <h1 className="text-4xl font-semibold font-display text-gray-800 tracking-tight">
-              Welcome, <span className="text-primary-600">{user.name}</span>
-            </h1>
-            <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
-              Representing <span className="font-semibold text-gray-800">{team?.name}</span> in <span className="font-semibold text-gray-800 tracking-tight">Ward {team?.ward}</span>
-            </p>
-          </div>
-
-          {/* Top Summary Stats */}
-          <div className="flex items-center justify-center gap-4 max-w-md mx-auto">
-            <div className="flex-1 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Today</p>
-              <p className="text-2xl font-bold text-primary-600 font-display">{memberStats?.todayClicks}</p>
-            </div>
-            <div className="flex-1 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total</p>
-              <p className="text-2xl font-bold text-gray-800 font-display">{memberStats?.totalClicks}</p>
-            </div>
-            <div className="flex-1 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ward</p>
-              <p className="text-2xl font-bold text-gray-800 font-display">{team?.ward}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Target Card */}
-        {activeTarget && (
-          <div className="max-w-md mx-auto w-full">
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-primary-100 ring-4 ring-primary-50/50 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Target className="h-20 w-20 text-primary-600 rotate-12" />
+    <div className="min-h-screen bg-[#fcfcfd] transition-opacity duration-300">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div className="mx-auto max-w-xl text-center space-y-10">
+          {/* Header Section */}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-[11px] font-semibold uppercase tracking-wider">
+                <div className={`h-1.5 w-1.5 rounded-full ${performance === 'Excellent' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : performance === 'Good' ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
+                <span>Performance: {performance}</span>
               </div>
+              <h1 className="text-4xl font-semibold font-display text-gray-800 tracking-tight">
+                Welcome, <span className="text-primary-600">{user.name}</span>
+              </h1>
+              <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
+                Representing <span className="font-semibold text-gray-800">{team?.name}</span> in <span className="font-semibold text-gray-800 tracking-tight">Ward {team?.ward}</span>
+              </p>
+            </div>
 
-              <div className="relative z-10 text-left">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
-                      <Target className="h-4 w-4" />
+            {/* Top Summary Stats */}
+            <div className="flex items-center justify-center gap-4 max-w-md mx-auto">
+              <div className="flex-1 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Today</p>
+                <p className="text-2xl font-bold text-primary-600 font-display">{memberStats?.todayClicks}</p>
+              </div>
+              <div className="flex-1 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total</p>
+                <p className="text-2xl font-bold text-gray-800 font-display">{memberStats?.totalClicks}</p>
+              </div>
+              <div className="flex-1 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ward</p>
+                <p className="text-2xl font-bold text-gray-800 font-display">{team?.ward}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Target Card */}
+          {activeTarget && (
+            <div className="max-w-md mx-auto w-full">
+              <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-primary-100 ring-4 ring-primary-50/50 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Target className="h-20 w-20 text-primary-600 rotate-12" />
+                </div>
+
+                <div className="relative z-10 text-left">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
+                        <Target className="h-4 w-4" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">{activeTarget.label || "Current Target"}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">{activeTarget.label || "Current Target"}</span>
+                    <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">
+                      {activeTarget.percentage}% Done
+                    </span>
                   </div>
-                  <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full">
-                    {activeTarget.percentage}% Done
-                  </span>
-                </div>
 
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-4xl font-bold text-gray-800 font-display">{activeTarget.current}</span>
-                  <span className="text-sm font-medium text-gray-400 tracking-tight">/ {activeTarget.target} entries achieved</span>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="h-3 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100 p-0.5">
-                    <div
-                      className="h-full bg-primary-600 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(37,99,235,0.3)]"
-                      style={{ width: `${activeTarget.percentage}%` }}
-                    />
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-4xl font-bold text-gray-800 font-display">{activeTarget.current}</span>
+                    <span className="text-sm font-medium text-gray-400 tracking-tight">/ {activeTarget.target} entries achieved</span>
                   </div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                    {activeTarget.target - activeTarget.current > 0
-                      ? `${activeTarget.target - activeTarget.current} more to reach goal`
-                      : "Goal Achieved! 🏆"}
-                  </p>
+
+                  <div className="space-y-2">
+                    <div className="h-3 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100 p-0.5">
+                      <div
+                        className="h-full bg-primary-600 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(37,99,235,0.3)]"
+                        style={{ width: `${activeTarget.percentage}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                      {activeTarget.target - activeTarget.current > 0
+                        ? `${activeTarget.target - activeTarget.current} more to reach goal`
+                        : "Goal Achieved! 🏆"}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Action Card */}
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden group max-w-md mx-auto w-full">
-          <div className="relative z-10 space-y-8">
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 text-gray-300 group-hover:text-primary-500 transition-colors">
-                <MousePointer2 className="h-8 w-8" />
+          {/* Action Card */}
+          <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden group max-w-md mx-auto w-full">
+            <div className="relative z-10 space-y-8">
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-50 text-gray-300 group-hover:text-primary-500 transition-colors">
+                  <MousePointer2 className="h-8 w-8" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold font-display text-gray-800">Collect Feedback</h2>
+                  <p className="text-xs text-gray-400 mt-1">Record a new entry manually</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold font-display text-gray-800">Collect Feedback</h2>
-                <p className="text-xs text-gray-400 mt-1">Record a new entry manually</p>
-              </div>
+
+              <button
+                disabled={isClicking}
+                onClick={handleTakeFeedback}
+                className="w-full h-20 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-2xl text-xl font-semibold font-display shadow-lg shadow-primary-100 transition-all active:scale-[0.98] flex items-center justify-center gap-3 group"
+              >
+                {isClicking ? (
+                  <>
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Take Feedback</span>
+                    <ArrowRight className="h-6 w-6 group-hover:translate-x-1.5 transition-transform" />
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl border border-gray-50 text-gray-400 font-semibold text-sm hover:bg-gray-50 hover:text-primary-600 transition-all active:scale-95 bg-gray-50/30"
+              >
+                <Share2 className="h-4 w-4" />
+                Share Link
+              </button>
             </div>
-
-            <button
-              disabled={isClicking}
-              onClick={handleTakeFeedback}
-              className="w-full h-20 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-2xl text-xl font-semibold font-display shadow-lg shadow-primary-100 transition-all active:scale-[0.98] flex items-center justify-center gap-3 group"
-            >
-              {isClicking ? (
-                <>
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <>
-                  <span>Take Feedback</span>
-                  <ArrowRight className="h-6 w-6 group-hover:translate-x-1.5 transition-transform" />
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => setIsShareModalOpen(true)}
-              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl border border-gray-50 text-gray-400 font-semibold text-sm hover:bg-gray-50 hover:text-primary-600 transition-all active:scale-95 bg-gray-50/30"
-            >
-              <Share2 className="h-4 w-4" />
-              Share Link
-            </button>
           </div>
+
+          {/* Footer Info */}
+          <p className="text-xs text-gray-400 italic">
+            After clicking, you will be automatically redirected to the central feedback portal.
+          </p>
         </div>
 
-        {/* Footer Info */}
-        <p className="text-xs text-gray-400 italic">
-          After clicking, you will be automatically redirected to the central feedback portal.
-        </p>
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          trackingUrl={trackingUrl}
+          memberName={user.name}
+        />
       </div>
-
-      <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        trackingUrl={trackingUrl}
-        memberName={user.name}
-      />
     </div>
   );
 }

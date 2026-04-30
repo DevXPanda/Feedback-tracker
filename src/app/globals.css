@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,17 +6,19 @@
 
 :root {
   --font-inter: 'Inter', sans-serif;
-  --font-poppins: 'Poppins', sans-serif;
 }
 
 body {
   font-family: var(--font-inter);
   background-color: #fcfcfd;
   color: #374151;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6, .font-display {
-  font-family: var(--font-poppins);
+  font-family: var(--font-inter);
+  letter-spacing: -0.02em;
 }
 
 .glass-card {
@@ -31,4 +33,22 @@ h1, h2, h3, h4, h5, h6, .font-display {
 
 .btn-secondary {
   @apply bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-5 rounded-lg transition-all duration-200 border border-gray-200 shadow-sm;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
 }

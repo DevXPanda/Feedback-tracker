@@ -69,7 +69,7 @@ export default function AddTeamForm() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Tabs */}
       <div className="flex border-b border-gray-100">
         <button

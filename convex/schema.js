@@ -18,7 +18,8 @@ export default defineSchema({
     teamId: v.optional(v.id("teams")),
   })
     .index("by_email", ["email"])
-    .index("by_phone", ["phone"]),
+    .index("by_phone", ["phone"])
+    .index("by_team", ["teamId"]),
   clicks: defineTable({
     userId: v.id("users"),
     teamId: v.id("teams"),
