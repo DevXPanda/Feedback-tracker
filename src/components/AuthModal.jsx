@@ -5,6 +5,7 @@ import { api } from "convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { LogIn, Loader2, Shield, X } from "lucide-react";
 import { toast } from "sonner";
+import { setSession } from "@/lib/auth";
 
 export default function AuthModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
@@ -26,14 +27,12 @@ export default function AuthModal({ isOpen, onClose }) {
       await new Promise(r => setTimeout(r, 1000));
 
       if (loginUser) {
-        localStorage.setItem("user", JSON.stringify(loginUser));
+        setSession(loginUser);
         toast.success(`Welcome back, ${loginUser.name}!`);
         
         onClose(); // Close the modal
 
         // Redirect based on role
-        // Force a full redirect to the correct dashboard/panel
-        // This ensures the authentication state is fresh on the new page
         if (loginUser.role === "admin") {
           window.location.href = "/dashboard";
         } else {
@@ -77,12 +76,12 @@ export default function AuthModal({ isOpen, onClose }) {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">Email or Phone Number</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">Phone Number</label>
             <input
               required
               type="text"
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-400/10"
-              placeholder="Email or Mobile"
+              placeholder="Mobile Number"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
             />

@@ -39,22 +39,45 @@ export const createUser = mutation({
   },
 });
 
+export const setupAdmin = mutation({
+  handler: async (ctx) => {
+    const phone = "7836055511";
+    const password = "1";
+    
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_phone", (q) => q.eq("phone", phone))
+      .unique();
+    
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        password: password,
+        role: "admin",
+        name: "Super Admin"
+      });
+      return "Admin credentials updated";
+    }
+
+    await ctx.db.insert("users", {
+      name: "Super Admin",
+      phone: phone,
+      password: password,
+      clickCount: 0,
+      role: "admin",
+    });
+
+    return "Admin created";
+  },
+});
+
 export const login = query({
   args: { identifier: v.string(), password: v.string() },
   handler: async (ctx, args) => {
-    // Try email first
-    let user = await ctx.db
+    // Only try phone
+    const user = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.identifier))
+      .withIndex("by_phone", (q) => q.eq("phone", args.identifier))
       .unique();
-    
-    // Then try phone
-    if (!user) {
-      user = await ctx.db
-        .query("users")
-        .withIndex("by_phone", (q) => q.eq("phone", args.identifier))
-        .unique();
-    }
     
     if (!user || user.password !== args.password) {
       return null;
@@ -80,9 +103,12 @@ export const getMembersByTeam = query({
 export const updateHeartbeat = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, {
-      lastActive: Date.now(),
-    });
+    const user = await ctx.db.get(args.userId);
+    if (user) {
+      await ctx.db.patch(args.userId, {
+        lastActive: Date.now(),
+      });
+    }
   },
 });
 
@@ -120,3 +146,18 @@ export const getMemberStats = query({
     };
   },
 });
+
+export const getMemberLogs = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const logs = await ctx.db
+      .query("clicks")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(50);
+    
+    return logs;
+  },
+});
+
+// End of users logic

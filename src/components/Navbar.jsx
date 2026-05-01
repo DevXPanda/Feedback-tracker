@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Users, Home, LogOut, LogIn } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthModal } from "@/context/AuthModalContext";
+import { getSession, clearSession } from "@/lib/auth";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const storedUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("user")) : null;
+      const storedUser = getSession();
       setUser(storedUser);
       setLoading(false);
     };
@@ -27,7 +28,7 @@ export default function Navbar() {
   }, [pathname]); // Re-check on navigation
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    clearSession();
     setUser(null);
     router.push("/");
     // Force a small delay to ensure state clears before redirect

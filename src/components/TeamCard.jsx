@@ -1,4 +1,4 @@
-import { MapPin, MousePointer2, TrendingUp, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { MapPin, MousePointer2, TrendingUp, ChevronRight, Pencil, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -80,7 +80,7 @@ export default function TeamCard({ team }) {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 pt-3 sm:pt-4 gap-2">
             <div className="flex flex-col gap-0.5 text-left">
               <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">
-                Clicks
+                Team Clicks
               </span>
               <div className="flex items-baseline gap-1">
                 <span className="text-lg sm:text-2xl font-semibold text-gray-800 font-display">
@@ -90,10 +90,9 @@ export default function TeamCard({ team }) {
               </div>
             </div>
             
-            <div className="flex -space-x-2 overflow-hidden self-end sm:self-center">
-               <div className="inline-block h-5 w-5 sm:h-6 sm:w-6 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-400">
-                 +
-               </div>
+            <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg">
+              <Users className="h-3 w-3 text-gray-400" />
+              <span className="text-[10px] font-bold text-gray-500">{team.memberSummary?.length || 0} Members</span>
             </div>
           </div>
         </div>

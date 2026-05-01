@@ -22,11 +22,15 @@ export default defineSchema({
     .index("by_team", ["teamId"]),
   clicks: defineTable({
     userId: v.id("users"),
-    teamId: v.id("teams"),
+    teamId: v.optional(v.id("teams")),
     timestamp: v.number(),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
+    source: v.optional(v.string()), // "direct" or "shared"
+    status: v.optional(v.string()), // e.g. "completed"
   })
-    .index("by_user", ["userId"])
-    .index("by_team", ["teamId"])
+    .index("by_user", ["userId", "timestamp"])
+    .index("by_team", ["teamId", "timestamp"])
     .index("by_timestamp", ["timestamp"]),
   targets: defineTable({
     target: v.number(),
@@ -39,4 +43,22 @@ export default defineSchema({
     .index("by_team", ["teamId"])
     .index("by_user", ["userId"])
     .index("by_date_range", ["startDate", "endDate"]),
+  pendingClicks: defineTable({
+    userId: v.id("users"),
+    teamId: v.optional(v.id("teams")),
+    timestamp: v.number(),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
+    source: v.string(),
+    lastHeartbeat: v.number(),
+  }),
+  locationFlags: defineTable({
+    userId: v.id("users"),
+    lat: v.float64(),
+    lng: v.float64(),
+    count: v.number(),
+    status: v.union(v.literal("pending"), v.literal("problem"), v.literal("cleared")),
+  })
+    .index("by_user", ["userId"])
+    .index("by_location", ["userId", "lat", "lng"]),
 });

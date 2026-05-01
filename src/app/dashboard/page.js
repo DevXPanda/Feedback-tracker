@@ -6,27 +6,26 @@ import { useRouter } from "next/navigation";
 import {
   Users,
   MousePointer2,
-  Map,
   TrendingUp,
-  LayoutDashboard,
   Search,
-  Filter,
-  Share2
+  Share2,
+  Plus,
+  Target,
+  Award,
+  Clock
 } from "lucide-react";
 import CreateActionModal from "@/components/CreateActionModal";
-import TeamCard from "@/components/TeamCard";
+import TargetModal from "@/components/TargetModal";
 import ShareModal from "@/components/ShareModal";
-import { Plus } from "lucide-react";
-import { toast } from "sonner";
 
 export default function Dashboard() {
   const router = useRouter();
   const [storedUser, setStoredUser] = useState(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Prevent scroll jump and layout shifts
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.history.scrollRestoration = 'manual';
@@ -42,14 +41,13 @@ export default function Dashboard() {
     }
   }, [router]);
 
-  // Fetch full user details to get live click count
   const user = useQuery(api.users.getUserById,
     storedUser?._id ? { userId: storedUser._id } : "skip"
   );
-  const teams = useQuery(api.teams.getTeams) || [];
   const stats = useQuery(api.teams.getGlobalStats);
+  const allMemberStats = useQuery(api.teams.getAllMemberStats);
 
-  if (!user || !teams || !stats) {
+  if (!user || !stats) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -57,9 +55,8 @@ export default function Dashboard() {
     );
   }
 
-  const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.ward.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredMembers = allMemberStats?.filter(member =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const trackingUrl = typeof window !== 'undefined'
@@ -72,12 +69,9 @@ export default function Dashboard() {
         <header className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
             <h1 className="text-2xl font-semibold font-display text-gray-900 tracking-tight">Admin Dashboard</h1>
-            {/* <p className="text-sm text-gray-500 mt-1.5 font-medium">
-              Welcome back, {user.name}. Here's your team performance overview.
-            </p> */}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:items-center sm:w-auto">
+          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
             <button
               onClick={() => setIsShareModalOpen(true)}
               className="flex items-center gap-2 px-3 sm:px-4 h-12 bg-white border border-gray-200 rounded-xl hover:border-primary-200 hover:bg-primary-50 transition-all active:scale-95 overflow-hidden"
@@ -114,64 +108,150 @@ export default function Dashboard() {
         />
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-10">
           <StatCard
-            title="Total Clicks"
+            title="Total Feedback"
             value={stats.totalClicks}
             icon={MousePointer2}
             iconColor="text-blue-600"
             iconBg="bg-blue-50"
-            trend={stats.clickTrend}
           />
           <StatCard
-            title="Active Teams"
-            value={stats.totalTeams}
+            title="Active Members"
+            value={stats.totalMembers || 0}
             icon={Users}
             iconColor="text-purple-600"
             iconBg="bg-purple-50"
           />
           <StatCard
-            title="Covered Wards"
-            value={stats.uniqueWards}
-            icon={Map}
+            title="Today's Feedback"
+            value={stats.todayCount || 0}
+            icon={TrendingUp}
             iconColor="text-emerald-600"
             iconBg="bg-emerald-50"
           />
+          <StatCard
+            title="Target Feedback"
+            value={`${stats.targetAchievement || 0} / ${stats.totalTarget || 0}`}
+            icon={Target}
+            iconColor="text-amber-600"
+            iconBg="bg-amber-50"
+          />
         </div>
 
-        <div className="space-y-6">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-semibold font-display text-gray-900 flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4" />
-              </div>
-              Team Performance
-            </h2>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 group"
-            >
-              <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
-              Create
-            </button>
-          </div>
-
-          <div className="transition-all">
-            {filteredTeams.length === 0 ? (
-              <div className="rounded-[2.5rem] bg-white border border-dashed border-gray-200 p-20 text-center">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gray-50 text-gray-300 mb-6">
-                  <LayoutDashboard className="h-10 w-10" />
+        <div className="space-y-12">
+          {/* Member Performance Summary Section */}
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-1">
+              <h2 className="text-lg font-semibold font-display text-gray-900 flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Award className="h-4 w-4" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">No teams found</h3>
-                <p className="text-sm text-gray-500 mt-2 max-w-xs mx-auto">Click the Create button to start building your high-performance team network.</p>
+                Member Performance Summary
+              </h2>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <button
+                  onClick={() => setIsTargetModalOpen(true)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 group"
+                >
+                  <Target className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+                  Target
+                </button>
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 group"
+                >
+                  <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
+                  Add Member
+                </button>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-                {filteredTeams.map((team) => (
-                  <TeamCard key={team._id} team={team} />
-                ))}
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                      <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest min-w-[200px]">Member</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center min-w-[100px]">Today</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center min-w-[150px]">Total Feedback</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center min-w-[140px]">Target</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right min-w-[120px]">Activity</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredMembers?.map((member) => (
+                      <tr 
+                        key={member._id} 
+                        className="hover:bg-gray-50/30 transition-colors cursor-pointer group"
+                        onClick={() => router.push(`/dashboard/member/${member._id}`)}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold text-sm">
+                              {member.name.charAt(0)}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-800 group-hover:text-primary-600 transition-colors">{member.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-sm font-bold text-primary-600">
+                            {member.today}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-sm font-bold text-gray-700">
+                            {member.total.toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center">
+                            {member.target ? (
+                              <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[11px] font-bold whitespace-nowrap tracking-tight ${
+                                member.targetPercentage >= 100 
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                                  : member.targetPercentage > 0 
+                                    ? "bg-amber-50 text-amber-700 border-amber-100" 
+                                    : "bg-red-50 text-red-700 border-red-100"
+                              }`}>
+                                <Target className="h-3.5 w-3.5" />
+                                <span>{member.targetAchievement} / {member.target}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No Target</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                            {member.lastActive ? (
+                               <>
+                                 <Clock className="h-3 w-3" />
+                                 {Math.round((Date.now() - member.lastActive) / 60000)}m ago
+                               </>
+                            ) : (
+                              "Never"
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {(!filteredMembers || filteredMembers.length === 0) && (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-20 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                             <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-300">
+                               <Users className="h-6 h-6" />
+                             </div>
+                             <p className="text-sm text-gray-400 font-medium">No members found matching your search</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -180,24 +260,22 @@ export default function Dashboard() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />
+
+      <TargetModal
+        isOpen={isTargetModalOpen}
+        onClose={() => setIsTargetModalOpen(false)}
+      />
     </div>
   );
 }
 
 function StatCard({ title, value, icon: Icon, iconColor, iconBg, trend }) {
-  const shortTitles = {
-    "Total Clicks": "Clicks",
-    "Active Teams": "Teams",
-    "Covered Wards": "Wards"
-  };
-
   return (
-    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-3 sm:p-5 border border-gray-200 transition-all hover:border-gray-300">
+    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-3 sm:p-5 border border-gray-200 transition-all hover:border-gray-300 shadow-sm">
       <div className="flex flex-col relative z-10">
         <div className="flex items-start justify-between">
-          <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest leading-tight">
-            <span className="sm:hidden">{shortTitles[title] || title}</span>
-            <span className="hidden sm:inline">{title}</span>
+          <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-tight">
+            {title}
           </p>
           <div className={`flex h-6 w-6 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl ${iconBg} ${iconColor} shrink-0`}>
             <Icon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
@@ -205,7 +283,7 @@ function StatCard({ title, value, icon: Icon, iconColor, iconBg, trend }) {
         </div>
 
         <div className="mt-1 sm:mt-2 flex items-baseline gap-2">
-          <h3 className="text-base sm:text-2xl font-semibold text-gray-800 font-display tracking-tight truncate">
+          <h3 className="text-base sm:text-2xl font-bold text-gray-900 font-display tracking-tight truncate">
             {typeof value === 'number' ? value.toLocaleString() : value}
           </h3>
           {trend && (

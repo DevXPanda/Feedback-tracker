@@ -14,7 +14,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-slate-500 max-w-sm mb-6 leading-relaxed">
-              Building the future of field-based feedback collection. We empower teams with real-time data and actionable insights.
+              Building the future of field-based feedback collection. We empower our network with real-time data and actionable insights.
             </p>
             <div className="flex gap-4">
               <SocialLink icon={Twitter} />
@@ -55,7 +55,7 @@ export default function Footer() {
               English (US)
             </a>
             <div className="h-4 w-px bg-gray-200" />
-            <p className="text-xs text-slate-400 font-medium">Made with ❤️ for field teams</p>
+            <p className="text-xs text-slate-400 font-medium">Made with ❤️ for field members</p>
           </div>
         </div>
       </div>

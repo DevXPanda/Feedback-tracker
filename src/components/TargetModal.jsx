@@ -1,33 +1,49 @@
 "use client";
-import { useState } from "react";
-import { X, Target, Calendar, Loader2 } from "lucide-react";
-import { useMutation } from "convex/react";
+import { useState, useMemo } from "react";
+import { X, Target, Calendar, Loader2, Search, User } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { toast } from "sonner";
 
-export default function TargetModal({ isOpen, onClose, teamId, userId }) {
+export default function TargetModal({ isOpen, onClose, initialUserId }) {
+  const [userId, setUserId] = useState(initialUserId || "");
   const [target, setTarget] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [label, setLabel] = useState("Daily Target");
   const [isLoading, setIsLoading] = useState(false);
+  const [searchMember, setSearchMember] = useState("");
 
+  const users = useQuery(api.users.getUsers) || [];
   const setTargetMutation = useMutation(api.targets.setTarget);
+
+  const filteredUsers = useMemo(() => {
+    return users
+      .filter(u => u.role !== "admin")
+      .filter(u => 
+        u.name.toLowerCase().includes(searchMember.toLowerCase()) ||
+        u.phone?.includes(searchMember)
+      );
+  }, [users, searchMember]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!target || !startDate || !endDate) return;
+    if (!target || !startDate || !endDate || (!initialUserId && !userId)) {
+      toast.error("Please fill all fields");
+      return;
+    }
 
     setIsLoading(true);
     try {
+      const selectedUser = users.find(u => u._id === (initialUserId || userId));
       await setTargetMutation({
         target: parseInt(target),
         startDate: new Date(startDate).setHours(0, 0, 0, 0),
         endDate: new Date(endDate).setHours(23, 59, 59, 999),
-        teamId,
-        userId,
+        teamId: selectedUser?.teamId,
+        userId: initialUserId || userId,
         label,
       });
       toast.success("Target set successfully!");
@@ -40,70 +56,108 @@ export default function TargetModal({ isOpen, onClose, teamId, userId }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600">
-              <Target className="h-4 w-4" />
-            </div>
-            <h2 className="text-lg font-semibold font-display text-gray-800 tracking-tight">Set Feedback Target</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+
+      <div className="relative w-full max-w-[440px] transform overflow-hidden rounded-2xl bg-white p-8 shadow-2xl transition-all animate-in fade-in zoom-in duration-200 border border-gray-200">
+        <button 
+          onClick={onClose}
+          className="absolute right-6 top-6 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="text-center mb-8">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500 text-white mb-4 shadow-md shadow-amber-100">
+            <Target className="h-6 w-6" />
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <h2 className="text-2xl font-semibold font-display text-gray-800 tracking-tight">Set Member Target</h2>
+          <p className="text-xs text-gray-500 mt-2">Assign feedback goals to specific members.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Target Description</label>
-            <input 
-              type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="e.g. Daily Target, Weekend Drive"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {!initialUserId && (
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">Select Member</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name or phone..."
+                  value={searchMember}
+                  onChange={(e) => setSearchMember(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50/30 text-sm outline-none focus:ring-2 focus:ring-primary-400/10 focus:border-primary-400 transition-all mb-2"
+                />
+              </div>
+              <div className="max-h-[140px] overflow-y-auto rounded-lg border border-gray-100 bg-white">
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map(u => (
+                    <button
+                      key={u._id}
+                      type="button"
+                      onClick={() => setUserId(u._id)}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${
+                        userId === u._id ? "bg-primary-50 text-primary-700 font-semibold" : "text-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                         <User className="h-3.5 w-3.5 text-gray-400" />
+                         <span>{u.name}</span>
+                      </div>
+                      <span className="text-[10px] text-gray-400 font-medium">{u.phone}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-gray-400">No members found</div>
+                )}
+              </div>
+            </div>
+          )}
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Target Count</label>
-            <input 
-              type="number"
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-              placeholder="Number of entries"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all font-display text-lg"
-              required
-            />
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">Target Goal</label>
+            <div className="grid grid-cols-2 gap-3">
+              <input 
+                type="text"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="Target Label"
+                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary-400/10 focus:border-primary-400 transition-all"
+              />
+              <input 
+                type="number"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                placeholder="Goal Count"
+                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary-400/10 focus:border-primary-400 transition-all font-bold"
+                required
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Start Date</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-gray-600 ml-1 uppercase tracking-wider">Start Date</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <input 
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-xs outline-none focus:ring-2 focus:ring-primary-400/10 focus:border-primary-400 transition-all"
                   required
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">End Date</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-gray-600 ml-1 uppercase tracking-wider">End Date</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <input 
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-xs outline-none focus:ring-2 focus:ring-primary-400/10 focus:border-primary-400 transition-all"
                   required
                 />
               </div>
@@ -113,12 +167,15 @@ export default function TargetModal({ isOpen, onClose, teamId, userId }) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full h-14 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl text-base font-semibold font-display shadow-md shadow-primary-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm shadow-none mt-4"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              "Activate Target"
+              <>
+                <Target className="h-4 w-4" />
+                <span>Activate Target</span>
+              </>
             )}
           </button>
         </form>

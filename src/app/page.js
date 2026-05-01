@@ -39,83 +39,47 @@ export default function Home() {
           <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary-200 to-indigo-200 opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"></div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-bold uppercase tracking-wider mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {/* <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-600"></span>
-                </span> */}
-              </div>
-              <h1 className="text-5xl sm:text-7xl font-semibold tracking-tight text-slate-900 leading-[1.05] mb-8">
-                Feedback Collection <br />
-                <span className="text-primary-600 bg-clip-text">Simplified.</span>
-              </h1>
-              <p className="text-xl leading-relaxed text-slate-600 font-normal mb-10">
-                Empower your field teams to collect feedback efficiently. Track real-time progress, manage ward distribution, and gain actionable insights.
-              </p>
-              <div className="flex flex-wrap items-center gap-6">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 flex justify-center">
+          <div className="max-w-4xl flex flex-col items-center text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-bold uppercase tracking-wider mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            </div>
+            <h1 className="text-4xl sm:text-7xl font-bold tracking-tight text-slate-900 leading-[1.2] mb-12">
+              <span className="block pb-2">Feedback Collection</span>
+              <span className="text-primary-600 bg-clip-text">Simplified.</span>
+            </h1>
+              
+              <div className="flex flex-col items-center gap-8 w-full">
                 {!user ? (
                   <button
                     onClick={openAuthModal}
-                    className="group px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-2xl font-semibold shadow-2xl shadow-gray-200 transition-all active:scale-[0.98] flex items-center gap-3"
+                    className="group w-full sm:w-auto px-12 py-5 bg-gray-900 hover:bg-gray-800 text-white rounded-2xl font-bold shadow-2xl shadow-gray-200 transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-lg"
                   >
-                    Get Started Free
+                    Login to Dashboard
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 ) : (
                   <Link
                     href={user.role === "admin" ? "/dashboard" : "/team"}
-                    className="group px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-semibold shadow-2xl shadow-primary-100 transition-all active:scale-[0.98] flex items-center gap-3"
+                    className="group w-full sm:w-auto px-12 py-5 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-bold shadow-2xl shadow-primary-100 transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-lg"
                   >
-                    Go to Workspace
+                    Enter Dashboard
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 )}
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-10 w-10 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 10}`} alt="User" />
+                
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <div className="flex -space-x-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="h-10 w-10 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden">
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 10}`} alt="User" />
+                      </div>
+                    ))}
+                    <div className="h-10 w-10 rounded-full border-2 border-white bg-primary-50 flex items-center justify-center text-[10px] font-bold text-primary-600">
+                      +2k
                     </div>
-                  ))}
-                  <div className="h-10 w-10 rounded-full border-2 border-white bg-primary-50 flex items-center justify-center text-[10px] font-bold text-primary-600">
-                    +2k
                   </div>
-                </div>
                 <p className="text-sm font-medium text-slate-500">Trusted by 2,000+ teams</p>
               </div>
-            </div>
-
-            <div className="relative">
-              <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                <FeatureCard
-                  icon={Zap}
-                  title="Real-time"
-                  desc="Live feedback tracking as it happens."
-                  delay="delay-0"
-                />
-                <FeatureCard
-                  icon={BarChart3}
-                  title="Analytics"
-                  desc="Deep dive into ward performance."
-                  delay="delay-100"
-                />
-                <FeatureCard
-                  icon={ShieldCheck}
-                  title="Secure"
-                  desc="Role-based access control."
-                  delay="delay-200"
-                />
-                <FeatureCard
-                  icon={CheckCircle2}
-                  title="Optimized"
-                  desc="Fast mobile flow for agents."
-                  delay="delay-300"
-                />
-              </div>
-              {/* Decorative blobs */}
-              <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary-100/50 rounded-full blur-[120px]"></div>
             </div>
           </div>
         </div>
