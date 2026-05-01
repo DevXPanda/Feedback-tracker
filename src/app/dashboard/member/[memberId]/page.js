@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Target,
   TrendingUp,
-  BarChart3
+  BarChart3,
+  History
 } from "lucide-react";
 
 export default function MemberDetailsPage() {
