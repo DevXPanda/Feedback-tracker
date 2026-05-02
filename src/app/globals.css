@@ -9,9 +9,42 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Global Hindi Optimization */
+.lang-hi body {
+  font-family: var(--font-noto-devanagari), sans-serif;
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+.lang-hi h1, 
+.lang-hi h2, 
+.lang-hi h3, 
+.lang-hi h4, 
+.lang-hi h5, 
+.lang-hi h6 {
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+.lang-hi p,
+.lang-hi span,
+.lang-hi li,
+.lang-hi button {
+  line-height: 1.65;
+}
+
 /* Ensure headings inherit the font correctly but don't force a family */
 h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
+}
+
+.lang-hi h1, 
+.lang-hi h2, 
+.lang-hi h3, 
+.lang-hi h4, 
+.lang-hi h5, 
+.lang-hi h6 {
+  letter-spacing: 0;
 }
 
 .glass-card {

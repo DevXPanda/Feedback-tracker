@@ -1,8 +1,11 @@
 "use client";
 import Link from "next/link";
-import { Twitter, Github, Linkedin, Mail, Globe, ArrowRight } from "lucide-react";
+import { Twitter, Linkedin, Mail, Globe, ArrowRight } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Footer() {
+  const { t, language } = useLanguage();
+
   return (
     <footer className="w-full bg-[#fcfcfd] pt-6 pb-6 border-t border-gray-100 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -13,12 +16,11 @@ export default function Footer() {
                 Feedback<span className="text-primary-600">Tracker</span>
               </span>
             </Link>
-            <p className="text-slate-500 max-w-sm mb-6 leading-relaxed">
-              Building the future of field-based feedback collection. We empower our network with real-time data and actionable insights.
+            <p className="text-slate-500 max-w-sm mb-6 leading-[1.6]">
+              {t("footer.desc")}
             </p>
             <div className="flex gap-4">
               <SocialLink icon={Twitter} />
-              {/* <SocialLink icon={Github} /> */}
               <SocialLink icon={Linkedin} />
               <SocialLink icon={Mail} />
             </div>
@@ -26,36 +28,36 @@ export default function Footer() {
 
           <div className="flex flex-col sm:flex-row gap-16 md:gap-24 lg:gap-32">
             <div>
-              <h4 className="font-bold text-gray-900 mb-4 font-display text-sm tracking-tight">Product</h4>
-              <ul className="space-y-3 text-sm text-slate-500 font-medium">
-                <li><FooterLink label="Features" /></li>
-                <li><FooterLink label="Analytics" /></li>
-                <li><FooterLink label="Security" /></li>
-                <li><FooterLink label="Pricing" /></li>
+              <h4 className="font-bold text-gray-900 mb-4 font-display text-sm tracking-normal">{t("footer.product")}</h4>
+              <ul className="space-y-4 text-sm text-slate-500 font-medium">
+                <li><FooterLink label={t("footer.features")} /></li>
+                <li><FooterLink label={t("footer.analytics")} /></li>
+                <li><FooterLink label={t("footer.security")} /></li>
+                <li><FooterLink label={t("footer.pricing")} /></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-gray-900 mb-4 font-display text-sm tracking-tight">Company</h4>
-              <ul className="space-y-3 text-sm text-slate-500 font-medium">
-                <li><FooterLink label="About Us" /></li>
-                <li><FooterLink label="Contact" /></li>
-                <li><FooterLink label="Privacy Policy" /></li>
-                <li><FooterLink label="Terms of Service" /></li>
+              <h4 className="font-bold text-gray-900 mb-4 font-display text-sm tracking-normal">{t("footer.company")}</h4>
+              <ul className="space-y-4 text-sm text-slate-500 font-medium">
+                <li><FooterLink label={t("footer.about_us")} /></li>
+                <li><FooterLink label={t("footer.contact")} /></li>
+                <li><FooterLink label={t("footer.privacy")} /></li>
+                <li><FooterLink label={t("footer.terms")} /></li>
               </ul>
             </div>
           </div>
         </div>
         <div className="pt-4 border-t border-gray-200/60 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-xs text-slate-400 font-medium tracking-tight">
-            &copy; {new Date().getFullYear()} FeedbackTracker. All rights reserved.
+            &copy; {new Date().getFullYear()} FeedbackTracker. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-xs text-slate-400 hover:text-primary-600 transition-colors flex items-center gap-1.5 font-medium">
+            <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium uppercase tracking-widest">
               <Globe className="h-3 w-3" />
-              English (US)
-            </a>
+              {language === 'en' ? 'English (US)' : 'Hindi (IN)'}
+            </div>
             <div className="h-4 w-px bg-gray-200" />
-            <p className="text-xs text-slate-400 font-medium">Made with ❤️ for field members</p>
+            <p className="text-xs text-slate-400 font-medium leading-relaxed">{t("footer.made_with")}</p>
           </div>
         </div>
       </div>

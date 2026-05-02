@@ -8,8 +8,9 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
-        display: ["var(--font-poppins)", "sans-serif"],
+        sans: ["var(--font-inter)", "var(--font-noto-devanagari)", "sans-serif"],
+        hindi: ["var(--font-noto-devanagari)", "sans-serif"],
+        display: ["var(--font-inter)", "sans-serif"],
       },
       colors: {
         primary: {

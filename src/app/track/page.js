@@ -1,28 +1,30 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Loader2, MapPin, Globe } from "lucide-react";
 import { Suspense } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function TrackPage() {
+  const { t } = useLanguage();
   return (
     <Suspense fallback={
       <div className="flex min-h-screen items-center justify-center bg-[#fcfcfd]">
         <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
       </div>
     }>
-      <TrackContent />
+      <TrackContent t={t} />
     </Suspense>
   );
 }
 
-function TrackContent() {
+function TrackContent({ t }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const createPendingClick = useMutation(api.teams.createPendingClick);
-  const [status, setStatus] = useState("Initializing tracking...");
+  const [status, setStatus] = useState(t("common.loading"));
 
   useEffect(() => {
     const track = async () => {
@@ -30,11 +32,11 @@ function TrackContent() {
       const memberId = searchParams.get("memberId") || searchParams.get("userId");
 
       if (!teamId && !memberId) {
-        setStatus("Invalid tracking link.");
+        setStatus(t("tracking.invalid_link"));
         return;
       }
 
-      setStatus("Capturing location...");
+      setStatus(t("tracking.location_status"));
       
       let location = { lat: undefined, lng: undefined };
       try {
@@ -55,7 +57,7 @@ function TrackContent() {
         console.warn("Geolocation failed or denied:", error);
       }
 
-      setStatus("Recording feedback...");
+      setStatus(t("portal.loading"));
       try {
         const pendingId = await createPendingClick({
           teamId: teamId || undefined,
@@ -64,11 +66,11 @@ function TrackContent() {
           lng: location.lng,
           source: "shared"
         });
-        setStatus("Redirecting to feedback portal...");
+        setStatus(t("tracking.redirecting"));
         router.push(`/portal?pendingId=${pendingId}`);
       } catch (error) {
         console.error("Tracking failed:", error);
-        setStatus("Redirecting anyway...");
+        setStatus(t("common.redirecting_anyway"));
         setTimeout(() => {
           window.location.href = "https://cf.sbmurban.org/";
         }, 2000);
@@ -76,7 +78,7 @@ function TrackContent() {
     };
 
     track();
-  }, [searchParams, createPendingClick, router]);
+  }, [searchParams, createPendingClick, router, t]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#fcfcfd] p-6 text-center">
@@ -90,7 +92,7 @@ function TrackContent() {
       </div>
       
       <h1 className="text-2xl font-semibold font-display text-gray-900 mb-2">
-        Feedback Portal
+        {t("landing.nav_title")}
       </h1>
       <p className="text-sm text-gray-500 max-w-xs leading-relaxed animate-pulse">
         {status}
@@ -99,7 +101,7 @@ function TrackContent() {
       <div className="mt-12 flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-100">
         <MapPin className="h-3 w-3 text-gray-400" />
         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-          Secure Geolocation Tracking
+          {t("tracking.secure_geo")}
         </span>
       </div>
     </div>

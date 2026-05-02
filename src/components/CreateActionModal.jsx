@@ -4,8 +4,10 @@ import { useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import { X, UserPlus, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function CreateActionModal({ isOpen, onClose }) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [memberData, setMemberData] = useState({ name: "", phone: "", password: "" });
 
@@ -25,11 +27,11 @@ export default function CreateActionModal({ isOpen, onClose }) {
         // teamId is explicitly not sent here, making it an independent member
       });
       
-      toast.success("Member added successfully!");
+      toast.success(t("common.save"));
       setMemberData({ name: "", phone: "", password: "" });
       onClose();
     } catch (error) {
-      toast.error(error.message || "Failed to add member");
+      toast.error(error.message || t("modals.error_add_member"));
     } finally {
       setLoading(false);
     }
@@ -51,25 +53,25 @@ export default function CreateActionModal({ isOpen, onClose }) {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white mb-4 shadow-md shadow-primary-100">
             <UserPlus className="h-6 w-6" />
           </div>
-          <h2 className="text-2xl font-semibold font-display text-gray-800 tracking-tight">Add Member</h2>
-          <p className="text-xs text-gray-500 mt-2">Create a new member in your network.</p>
+          <h2 className="text-2xl font-semibold font-display text-gray-800 tracking-tight">{t("modals.add_member_title")}</h2>
+          <p className="text-xs text-gray-500 mt-2">{t("modals.add_member_desc")}</p>
         </div>
 
         <form onSubmit={handleAddMember} className="space-y-5">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">Full Name</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">{t("modals.full_name")}</label>
             <input
               required
               type="text"
               className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-400/10"
-              placeholder="e.g. John Doe"
+              placeholder={t("modals.name_placeholder")}
               value={memberData.name}
               onChange={(e) => setMemberData({ ...memberData, name: e.target.value })}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">Phone Number</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">{t("modals.phone_number")}</label>
             <input
               required
               type="tel"
@@ -81,7 +83,7 @@ export default function CreateActionModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">Pin / Password</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1 uppercase tracking-wider">{t("modals.pin_password")}</label>
             <input
               required
               type="password"
@@ -102,7 +104,7 @@ export default function CreateActionModal({ isOpen, onClose }) {
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                <span>Create Member</span>
+                <span>{t("modals.create_button")}</span>
               </>
             )}
           </button>
@@ -110,7 +112,7 @@ export default function CreateActionModal({ isOpen, onClose }) {
 
         <div className="mt-8 pt-6 border-t border-gray-50 text-center">
           <p className="text-[10px] text-gray-400 italic">
-            New members will be able to log in using their phone and password.
+            {t("modals.add_member_footer")}
           </p>
         </div>
       </div>

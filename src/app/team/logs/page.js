@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
 import { 
   ChevronRight, 
   History, 
@@ -17,6 +18,7 @@ import {
 
 export default function MemberLogs() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -49,14 +51,14 @@ export default function MemberLogs() {
         {/* Header Section */}
         <header className="mb-10">
           <nav className="flex items-center gap-2 mb-6 text-xs font-medium text-gray-500">
-            <button onClick={() => router.push("/team")} className="hover:text-primary-600 transition-colors">Dashboard</button>
+            <button onClick={() => router.push("/team")} className="hover:text-primary-600 transition-colors">{t("common.dashboard")}</button>
             <ChevronRight className="h-3 w-3 text-gray-300" />
-            <span className="text-gray-900 font-semibold">Activity Logs</span>
+            <span className="text-gray-900 font-semibold">{t("common.activity")}</span>
           </nav>
           
           <div>
-            <h1 className="text-2xl font-semibold font-display text-gray-900 tracking-tight">Personal Activity logs</h1>
-            <p className="text-sm text-gray-500">Detailed performance and activity tracking</p>
+            <h1 className="text-2xl font-semibold font-display text-gray-900 tracking-tight">{t("common.activity")}</h1>
+            <p className="text-sm text-gray-500">{t("member_profile.subtitle")}</p>
           </div>
 
           <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden p-6 sm:p-8 mt-6">
@@ -70,7 +72,7 @@ export default function MemberLogs() {
                   <div className="flex flex-wrap gap-4 mt-2">
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <Phone className="h-4 w-4 text-gray-400" />
-                      {user.phone || "No phone added"}
+                      {user.phone || t("common.no_data")}
                     </div>
                   </div>
                 </div>
@@ -80,17 +82,17 @@ export default function MemberLogs() {
                     : "bg-gray-50 text-gray-500 border border-gray-100"
                     }`}>
                     <div className={`h-1.5 w-1.5 rounded-full ${user.lastActive && (Date.now() - user.lastActive < 60000) ? "bg-emerald-500 animate-pulse" : "bg-gray-300"}`}></div>
-                    {user.lastActive && (Date.now() - user.lastActive < 60000) ? "Active Now" : "Currently Offline"}
+                    {user.lastActive && (Date.now() - user.lastActive < 60000) ? t("common.active_now") : t("common.currently_offline")}
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
                 <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 text-center min-w-[120px]">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Clicks</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t("dashboard.total_clicks")}</p>
                   <p className="text-2xl font-bold text-gray-900 font-display">{stats.totalClicks}</p>
                 </div>
                 <div className="bg-primary-50/50 rounded-2xl p-4 border border-primary-100 text-center min-w-[120px]">
-                  <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest mb-1">Today</p>
+                  <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest mb-1">{t("dashboard.today")}</p>
                   <p className="text-2xl font-bold text-primary-600 font-display">{stats.todayClicks}</p>
                 </div>
               </div>
@@ -104,7 +106,7 @@ export default function MemberLogs() {
             <div className="h-8 w-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
               <History className="h-4 w-4" />
             </div>
-            Recent Activities
+            {t("member_profile.recent_activities")}
           </h2>
 
           <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
@@ -112,10 +114,10 @@ export default function MemberLogs() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Timestamp</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Source</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Location Details</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">Status</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">{t("common.timestamp")}</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">{t("common.source")}</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">{t("common.location_details")}</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">{t("common.action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -153,14 +155,14 @@ export default function MemberLogs() {
                               <span className="text-xs font-semibold text-gray-700">
                                 {log.lat?.toFixed(4)}, {log.lng?.toFixed(4)}
                               </span>
-                              <span className="text-[10px] text-gray-400">Verified GPS Coordinates</span>
+                              <span className="text-[10px] text-gray-400">{t("member_profile.verified_gps")}</span>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider">
                             <CheckCircle2 className="h-3 w-3" />
-                            Verified
+                            {t("common.verified")}
                           </div>
                         </td>
                       </tr>
@@ -172,7 +174,7 @@ export default function MemberLogs() {
                           <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-300">
                             <AlertCircle className="h-6 w-6" />
                           </div>
-                          <p className="text-sm text-gray-400 font-medium">No activity recorded yet</p>
+                          <p className="text-sm text-gray-400 font-medium">{t("member_profile.no_activity")}</p>
                         </div>
                       </td>
                     </tr>

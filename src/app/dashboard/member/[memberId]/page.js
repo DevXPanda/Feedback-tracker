@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useParams, useRouter } from "next/navigation";
@@ -23,11 +24,23 @@ import {
   BarChart3,
   History
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function MemberDetailsPage() {
   const params = useParams();
+  const { t } = useLanguage();
   const router = useRouter();
   const userId = params.memberId;
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!storedUser || storedUser.role !== "admin") {
+      router.push("/");
+    } else {
+      setUser(storedUser);
+    }
+  }, [router]);
 
   const member = useQuery(api.users.getUserById, { userId });
   const stats = useQuery(api.users.getMemberStats, { userId });
@@ -41,7 +54,7 @@ export default function MemberDetailsPage() {
   const flags = useQuery(api.teams.getMemberFlags, { userId });
   const updateFlagStatus = useMutation(api.teams.updateFlagStatus);
 
-  if (member === undefined || stats === undefined || flags === undefined) {
+  if (!user || member === undefined || stats === undefined || flags === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-600 border-t-transparent"></div>
@@ -52,12 +65,12 @@ export default function MemberDetailsPage() {
   if (!member) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-800">Member not found</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{t("member_profile.member_not_found")}</h1>
         <button
           onClick={() => router.push("/dashboard")}
           className="mt-4 text-primary-600 hover:underline flex items-center gap-2"
         >
-          Dashboard
+          {t("common.dashboard")}
         </button>
       </div>
     );
@@ -69,13 +82,13 @@ export default function MemberDetailsPage() {
         {/* Header Section */}
         <header className="mb-10">
           <nav className="flex items-center gap-2 mb-6 text-xs font-medium text-gray-500">
-            <button onClick={() => router.push("/dashboard")} className="hover:text-primary-600 transition-colors">Dashboard</button>
+            <button onClick={() => router.push("/dashboard")} className="hover:text-primary-600 transition-colors">{t("common.dashboard")}</button>
             <ChevronRight className="h-3 w-3 text-gray-300" />
             <span className="text-gray-900 font-semibold">{member.name}</span>
           </nav>
           <div>
-            <h1 className="text-2xl font-semibold font-display text-gray-900 tracking-tight">Member Profile</h1>
-            <p className="text-sm text-gray-500">Detailed performance and activity logs</p>
+            <h1 className="text-2xl font-semibold font-display text-gray-900 tracking-tight">{t("member_profile.title")}</h1>
+            <p className="text-sm text-gray-500">{t("member_profile.subtitle")}</p>
           </div>
 
           <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden p-6 sm:p-8 mt-6">
@@ -89,7 +102,7 @@ export default function MemberDetailsPage() {
                   <div className="flex flex-wrap gap-4 mt-2">
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <Phone className="h-4 w-4 text-gray-400" />
-                      {member.phone || "No phone added"}
+                      {member.phone || t("member_profile.no_phone")}
                     </div>
                   </div>
                 </div>
@@ -99,17 +112,17 @@ export default function MemberDetailsPage() {
                     : "bg-gray-50 text-gray-500 border border-gray-100"
                     }`}>
                     <div className={`h-1.5 w-1.5 rounded-full ${member.lastActive && (Date.now() - member.lastActive < 60000) ? "bg-emerald-500 animate-pulse" : "bg-gray-300"}`}></div>
-                    {member.lastActive && (Date.now() - member.lastActive < 60000) ? "Active Now" : "Currently Offline"}
+                    {member.lastActive && (Date.now() - member.lastActive < 60000) ? t("common.active") : t("common.offline")}
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
                 <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 text-center min-w-[120px]">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Clicks</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t("member_profile.total_clicks")}</p>
                   <p className="text-2xl font-bold text-gray-900 font-display">{stats.totalClicks}</p>
                 </div>
                 <div className="bg-primary-50/50 rounded-2xl p-4 border border-primary-100 text-center min-w-[120px]">
-                  <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest mb-1">Today</p>
+                  <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest mb-1">{t("common.today")}</p>
                   <p className="text-2xl font-bold text-primary-600 font-display">{stats.todayClicks}</p>
                 </div>
               </div>
@@ -125,7 +138,7 @@ export default function MemberDetailsPage() {
                 <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
                   <Target className="h-4 w-4" />
                 </div>
-                Active Target Progress
+                {t("member_profile.active_target")}
               </h3>
               <div className="flex items-center gap-2 text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
                 <Clock className="h-3 w-3" />
@@ -140,7 +153,7 @@ export default function MemberDetailsPage() {
 
               <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-10 items-center">
                 <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Current Achievement</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">{t("dashboard.target")}</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-bold text-gray-900 font-display tracking-tight">{activeTarget.current}</span>
                     <span className="text-sm font-medium text-gray-400 tracking-tight">/ {activeTarget.target}</span>
@@ -150,11 +163,11 @@ export default function MemberDetailsPage() {
                 <div className="md:col-span-2 space-y-6">
                   <div className="space-y-3">
                     <div className="flex justify-between items-end">
-                      <span className="text-sm font-bold text-amber-600">{activeTarget.percentage}% Complete</span>
+                      <span className="text-sm font-bold text-amber-600">{activeTarget.percentage}% {t("member_profile.complete")}</span>
                       <span className="text-xs font-medium text-gray-400">
                         {activeTarget.target - activeTarget.current > 0
-                          ? `${activeTarget.target - activeTarget.current} more to reach goal`
-                          : "Target Achieved! 🏆"}
+                          ? `${activeTarget.target - activeTarget.current} ${t("member_profile.more_to_reach")}`
+                          : t("member_profile.target_achieved")}
                       </span>
                     </div>
                     <div className="h-4 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100 p-1">
@@ -168,11 +181,11 @@ export default function MemberDetailsPage() {
                   <div className="flex items-center gap-8 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5" />
-                      Starts: {new Date(activeTarget.startDate).toLocaleDateString()}
+                      {t("member_profile.starts")}: {new Date(activeTarget.startDate).toLocaleDateString()}
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="h-3.5 w-3.5" />
-                      Ends: {new Date(activeTarget.endDate).toLocaleDateString()}
+                      {t("member_profile.ends")}: {new Date(activeTarget.endDate).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -186,7 +199,7 @@ export default function MemberDetailsPage() {
           <div className="mb-10 space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Security Alerts
+              {t("member_profile.security_alerts")}
             </h3>
             {flags.map((flag) => (
               <div
@@ -203,10 +216,10 @@ export default function MemberDetailsPage() {
                   </div>
                   <div className="flex-1">
                     <h4 className={`text-sm font-bold uppercase tracking-wider ${flag.status === "problem" ? "text-red-700" : "text-amber-700"}`}>
-                      {flag.status === "problem" ? "Confirmed Spam Location" : "Suspicious Location Activity"}
+                      {flag.status === "problem" ? t("member_profile.spam_location") : t("member_profile.location_activity")}
                     </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Detected <span className="font-bold">{flag.count} entries</span> from the same location ({flag.lat}, {flag.lng}).
+                      {t("member_profile.detected_entries").replace("{count}", flag.count)} ({flag.lat}, {flag.lng}).
                     </p>
                     <div className="flex items-center gap-4 mt-3">
                       <a
@@ -215,7 +228,7 @@ export default function MemberDetailsPage() {
                         rel="noopener noreferrer"
                         className="text-[10px] font-bold text-primary-600 uppercase tracking-widest hover:underline flex items-center gap-1"
                       >
-                        View on Map <ExternalLink className="h-2.5 w-2.5" />
+                        {t("member_profile.view_on_map")} <ExternalLink className="h-2.5 w-2.5" />
                       </a>
                     </div>
                   </div>
@@ -228,7 +241,7 @@ export default function MemberDetailsPage() {
                       className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
                     >
                       <XCircle className="h-3.5 w-3.5" />
-                      Mark Problem
+                      {t("member_profile.mark_problem")}
                     </button>
                   )}
                   <button
@@ -236,7 +249,7 @@ export default function MemberDetailsPage() {
                     className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Clear Flag
+                    {t("member_profile.clear_flag")}
                   </button>
                 </div>
               </div>
@@ -251,11 +264,11 @@ export default function MemberDetailsPage() {
               <div className="h-8 w-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
                 <BarChart3 className="h-4 w-4" />
               </div>
-              Activity Logs {activeTarget && <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md ml-2">Filtered by Target</span>}
+              {t("common.activity")} {activeTarget && <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md ml-2">{t("member_profile.filtered_by_target")}</span>}
             </h2>
             <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               <History className="h-3.5 w-3.5" />
-              Showing last 50 events
+              {t("member_profile.showing_last_50")}
             </div>
           </div>
 
@@ -264,10 +277,10 @@ export default function MemberDetailsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Timestamp</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Source</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Location Details</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">Action</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">{t("common.timestamp")}</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">{t("common.source")}</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">{t("common.location_details")}</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">{t("common.action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -302,14 +315,14 @@ export default function MemberDetailsPage() {
                               <span className="text-xs font-semibold text-gray-700">
                                 {log.lat?.toFixed(4)}, {log.lng?.toFixed(4)}
                               </span>
-                              <span className="text-[10px] text-gray-400">Verified GPS Coordinates</span>
+                              <span className="text-[10px] text-gray-400">{t("member_profile.verified_gps")}</span>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold uppercase tracking-wider">
                             <CheckCircle2 className="h-3 w-3" />
-                            Verified
+                            {t("common.verified")}
                           </div>
                         </td>
                       </tr>
@@ -321,7 +334,7 @@ export default function MemberDetailsPage() {
                           <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-300">
                             <Clock className="h-6 w-6" />
                           </div>
-                          <p className="text-sm text-gray-400 font-medium">No activity recorded for this member yet.</p>
+                          <p className="text-sm text-gray-400 font-medium">{t("member_profile.no_activity")}</p>
                         </div>
                       </td>
                     </tr>

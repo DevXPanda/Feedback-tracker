@@ -11,8 +11,10 @@ import {
   Send
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ShareModal({ isOpen, onClose, trackingUrl, memberName }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -21,15 +23,15 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
     try {
       await navigator.clipboard.writeText(trackingUrl);
       setCopied(true);
-      toast.success("Link copied to clipboard!");
+      toast.success(t("dashboard.copy_success"));
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error("Failed to copy link");
+      toast.error(t("modals.error_copy_link"));
     }
   };
 
   const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`Hi, I'm ${memberName}. Please provide your feedback here: ${trackingUrl}`)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(t("modals.share_message").replace("{name}", memberName).replace("{url}", trackingUrl))}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(trackingUrl)}`,
     // Instagram doesn't support direct URL sharing via web links for stories/posts, usually just profile link
     instagram: `https://www.instagram.com/`, 
@@ -56,8 +58,8 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
             <Share2 className="h-7 w-7" />
           </div>
-          <h3 className="text-xl font-semibold font-display text-gray-900 tracking-tight">Share Your Link</h3>
-          <p className="mt-2 text-sm text-gray-500">Every click through this link will be credited to you.</p>
+          <h3 className="text-xl font-semibold font-display text-gray-900 tracking-tight">{t("modals.share_title")}</h3>
+          <p className="mt-2 text-sm text-gray-500">{t("modals.share_desc")}</p>
         </div>
 
         {/* Copy Section */}
@@ -82,19 +84,19 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
         <div className="grid grid-cols-3 gap-4">
           <SocialButton 
             icon={MessageCircle} 
-            label="WhatsApp" 
+            label="WHATSAPP" 
             color="bg-[#25D366]" 
             onClick={() => window.open(shareLinks.whatsapp, '_blank')}
           />
           <SocialButton 
             icon={Facebook} 
-            label="Facebook" 
+            label="FACEBOOK" 
             color="bg-[#1877F2]" 
             onClick={() => window.open(shareLinks.facebook, '_blank')}
           />
           <SocialButton 
             icon={Instagram} 
-            label="Instagram" 
+            label="INSTAGRAM" 
             color="bg-gradient-to-tr from-[#FFB700] via-[#FF0069] to-[#7600C5]" 
             onClick={() => window.open(shareLinks.instagram, '_blank')}
           />

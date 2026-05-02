@@ -5,20 +5,22 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Loader2, ShieldCheck, ExternalLink } from "lucide-react";
 import { Suspense } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PortalPage() {
+  const { t } = useLanguage();
   return (
     <Suspense fallback={
       <div className="flex min-h-screen items-center justify-center bg-gray-900">
         <Loader2 className="h-10 w-10 animate-spin text-primary-400" />
       </div>
     }>
-      <PortalContent />
+      <PortalContent t={t} />
     </Suspense>
   );
 }
 
-function PortalContent() {
+function PortalContent({ t }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pendingId = searchParams.get("pendingId");
@@ -42,9 +44,9 @@ function PortalContent() {
   if (!pendingId) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-xl font-bold text-gray-800">Invalid Session</h1>
+        <h1 className="text-xl font-bold text-gray-800">{t("common.invalid_session")}</h1>
         <button onClick={() => router.push("/")} className="mt-4 text-primary-600 hover:underline">
-          Go Home
+          {t("common.go_home")}
         </button>
       </div>
     );
@@ -57,13 +59,13 @@ function PortalContent() {
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-            Secure Session Active
+            {t("portal.secure_status")}
           </span>
         </div>
         {!iframeLoaded && (
           <div className="flex items-center gap-2">
             <Loader2 className="h-3 w-3 animate-spin text-primary-400" />
-            <span className="text-[10px] font-medium text-gray-300">Loading feedback portal...</span>
+            <span className="text-[10px] font-medium text-gray-300">{t("portal.loading")}</span>
           </div>
         )}
         <div className="flex items-center gap-4">
@@ -74,7 +76,7 @@ function PortalContent() {
             rel="noopener noreferrer"
             className="text-[10px] font-bold uppercase tracking-widest hover:text-primary-400 transition-colors flex items-center gap-1.5"
           >
-            Open Original <ExternalLink className="h-3 w-3" />
+            {t("portal.open_original")} <ExternalLink className="h-3 w-3" />
           </a>
         </div>
       </div>
@@ -91,8 +93,8 @@ function PortalContent() {
         {!iframeLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#fcfcfd]">
              <div className="flex flex-col items-center gap-4">
-               <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
-               <p className="text-sm font-medium text-gray-500">Connecting to secure feedback server...</p>
+                <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
+                <p className="text-sm font-medium text-gray-500">{t("portal.loading_desc")}</p>
              </div>
           </div>
         )}
