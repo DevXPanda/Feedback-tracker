@@ -51,6 +51,7 @@ export default defineSchema({
     userId: v.optional(v.id("users")), // Keeping for legacy/migration
     teamId: v.optional(v.id("teams")),
     ulbId: v.optional(v.id("ulbs")),
+    adminId: v.optional(v.id("users")), // The Admin who manages the member who generated this click
     timestamp: v.number(),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
@@ -61,7 +62,8 @@ export default defineSchema({
     .index("by_user", ["userId", "timestamp"])
     .index("by_team", ["teamId", "timestamp"])
     .index("by_timestamp", ["timestamp"])
-    .index("by_ulb", ["ulbId"]),
+    .index("by_ulb", ["ulbId"])
+    .index("by_admin", ["adminId"]),
 
   targets: defineTable({
     target: v.number(),
@@ -71,12 +73,14 @@ export default defineSchema({
     teamMemberId: v.optional(v.id("teamMembers")),
     userId: v.optional(v.id("users")), // Legacy
     ulbId: v.optional(v.id("ulbs")),
+    adminId: v.optional(v.id("users")),
     label: v.optional(v.string()), // e.g. "Daily Target"
   })
     .index("by_team", ["teamId"])
     .index("by_team_member", ["teamMemberId"])
     .index("by_user", ["userId"])
     .index("by_ulb", ["ulbId"])
+    .index("by_admin", ["adminId"])
     .index("by_date_range", ["startDate", "endDate"]),
 
   pendingClicks: defineTable({
@@ -84,17 +88,19 @@ export default defineSchema({
     userId: v.optional(v.id("users")), // Legacy
     teamId: v.optional(v.id("teams")),
     ulbId: v.optional(v.id("ulbs")),
+    adminId: v.optional(v.id("users")),
     timestamp: v.number(),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
     source: v.string(),
     lastHeartbeat: v.number(),
-  }).index("by_ulb", ["ulbId"]).index("by_team_member", ["teamMemberId"]),
+  }).index("by_ulb", ["ulbId"]).index("by_team_member", ["teamMemberId"]).index("by_admin", ["adminId"]),
 
   locationFlags: defineTable({
     teamMemberId: v.optional(v.id("teamMembers")),
     userId: v.optional(v.id("users")), // Legacy
     ulbId: v.optional(v.id("ulbs")),
+    adminId: v.optional(v.id("users")),
     lat: v.float64(),
     lng: v.float64(),
     count: v.number(),
@@ -103,5 +109,6 @@ export default defineSchema({
     .index("by_team_member", ["teamMemberId"])
     .index("by_user", ["userId"])
     .index("by_ulb", ["ulbId"])
+    .index("by_admin", ["adminId"])
     .index("by_location", ["teamMemberId", "lat", "lng"]),
 });

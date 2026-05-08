@@ -13,6 +13,13 @@ export const setTarget = mutation({
     label: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    let adminId = args.userId; // Legacy
+    
+    if (args.teamMemberId) {
+      const member = await ctx.db.get(args.teamMemberId);
+      if (member) adminId = member.adminId;
+    }
+
     return await ctx.db.insert("targets", {
       target: args.target,
       startDate: args.startDate,
@@ -21,6 +28,7 @@ export const setTarget = mutation({
       teamMemberId: args.teamMemberId,
       userId: args.userId,
       ulbId: args.ulbId,
+      adminId: adminId,
       label: args.label,
     });
   },

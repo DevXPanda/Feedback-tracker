@@ -331,10 +331,14 @@ export const createPendingClick = mutation({
     source: v.string(),
   },
   handler: async (ctx, args) => {
+    const member = await ctx.db.get(args.teamMemberId);
+    const adminId = member?.adminId;
+
     const pendingId = await ctx.db.insert("pendingClicks", {
       teamMemberId: args.teamMemberId,
       teamId: args.teamId,
       ulbId: args.ulbId,
+      adminId: adminId,
       lat: args.lat,
       lng: args.lng,
       source: args.source,
@@ -396,6 +400,7 @@ export const validatePendingClick = mutation({
         teamMemberId: pending.teamMemberId,
         teamId: pending.teamId,
         ulbId: pending.ulbId,
+        adminId: pending.adminId,
         timestamp: pending.timestamp,
         lat: pending.lat,
         lng: pending.lng,
@@ -424,6 +429,7 @@ export const validatePendingClick = mutation({
           await ctx.db.insert("locationFlags", {
             teamMemberId: pending.teamMemberId,
             ulbId: pending.ulbId,
+            adminId: pending.adminId,
             lat: roundedLat,
             lng: roundedLng,
             count: 1,

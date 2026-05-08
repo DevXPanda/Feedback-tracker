@@ -40,3 +40,33 @@ export const getByCode = query({
       .unique();
   },
 });
+export const listWithStats = query({
+  handler: async (ctx) => {
+    const ulbs = await ctx.db.query("ulbs").collect();
+    
+    return await Promise.all(ulbs.map(async (ulb) => {
+      const admins = await ctx.db
+        .query("users")
+        .withIndex("by_ulb", (q) => q.eq("ulbId", ulb._id))
+        .filter((q) => q.eq(q.field("role"), "admin"))
+        .collect();
+
+      const members = await ctx.db
+        .query("teamMembers")
+        .withIndex("by_ulb", (q) => q.eq("ulbId", ulb._id))
+        .collect();
+
+      const clicks = await ctx.db
+        .query("clicks")
+        .withIndex("by_ulb", (q) => q.eq("ulbId", ulb._id))
+        .collect();
+
+      return {
+        ...ulb,
+        adminCount: admins.length,
+        memberCount: members.length,
+        feedbackCount: clicks.length,
+      };
+    }));
+  },
+});

@@ -26,7 +26,7 @@ export default function SuperAdminDashboard() {
   const [newUlb, setNewUlb] = useState({ name: "", code: "" });
   const [newAdmin, setNewAdmin] = useState({ name: "", phone: "", password: "", ulbId: "" });
 
-  const ulbs = useQuery(api.ulbs.list);
+  const ulbs = useQuery(api.ulbs.listWithStats);
   const createUlb = useMutation(api.ulbs.create);
   const createAdmin = useMutation(api.users.createAdmin);
 
@@ -65,12 +65,17 @@ export default function SuperAdminDashboard() {
 
   if (!ulbs) return <div className="p-8 text-center text-gray-500">Loading Tenants...</div>;
 
+  const totalUlbs = ulbs.length;
+  const totalAdmins = ulbs.reduce((acc, ulb) => acc + ulb.adminCount, 0);
+  const totalMembers = ulbs.reduce((acc, ulb) => acc + ulb.memberCount, 0);
+  const totalFeedback = ulbs.reduce((acc, ulb) => acc + ulb.feedbackCount, 0);
+
   return (
     <div className="min-h-screen bg-[#fcfcfd] py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-10 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-display">Super Admin Dashboard</h1>
+            <h1 className="text-2xl font-semibold font-display text-gray-900 tracking-tight">Super Admin Dashboard</h1>
             <p className="text-sm text-gray-500 mt-1">Manage Urban Local Bodies and Global Administrators</p>
           </div>
           <div className="flex gap-4">
@@ -91,10 +96,42 @@ export default function SuperAdminDashboard() {
           </div>
         </header>
 
+        {/* Global Overview Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
+          <StatCard 
+            title="Total Tenants" 
+            value={totalUlbs} 
+            icon={Building2} 
+            iconBg="bg-blue-50" 
+            iconColor="text-blue-600" 
+          />
+          <StatCard 
+            title="Total Admins" 
+            value={totalAdmins} 
+            icon={ShieldCheck} 
+            iconBg="bg-emerald-50" 
+            iconColor="text-emerald-600" 
+          />
+          <StatCard 
+            title="Field Members" 
+            value={totalMembers} 
+            icon={Users} 
+            iconBg="bg-amber-50" 
+            iconColor="text-amber-600" 
+          />
+          <StatCard 
+            title="Total Feedback" 
+            value={totalFeedback} 
+            icon={CheckCircle2} 
+            iconBg="bg-primary-50" 
+            iconColor="text-primary-600" 
+          />
+        </div>
+
         <div className="grid md:grid-cols-3 gap-8">
           {/* ULB List */}
           <div className="md:col-span-2 space-y-6">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-lg font-semibold font-display text-gray-900 flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary-600" />
               Urban Local Bodies
             </h2>
@@ -103,8 +140,10 @@ export default function SuperAdminDashboard() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Name</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Code</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">ID</th>
+                    <th className="px-4 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Admins</th>
+                    <th className="px-4 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Members</th>
+                    <th className="px-4 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Feedback</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -115,19 +154,33 @@ export default function SuperAdminDashboard() {
                         className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${expandedUlbId === ulb._id ? "bg-primary-50/30" : ""}`}
                       >
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col">
                             <span className="font-semibold text-gray-800">{ulb.name}</span>
-                            {expandedUlbId === ulb._id ? (
-                              <Search className="h-3 w-3 text-primary-500" />
-                            ) : null}
+                            <span className="text-[10px] font-mono text-gray-400 uppercase">{ulb.code}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4"><span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-bold uppercase">{ulb.code}</span></td>
-                        <td className="px-6 py-4 text-xs font-mono text-gray-400">{ulb._id}</td>
+                        <td className="px-4 py-4 text-center">
+                          <span className="text-sm font-bold text-gray-700">{ulb.adminCount}</span>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <span className="text-sm font-bold text-gray-700">{ulb.memberCount}</span>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <span className="text-sm font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">{ulb.feedbackCount}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end">
+                            {expandedUlbId === ulb._id ? (
+                              <ChevronUp className="h-4 w-4 text-primary-500" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-gray-300" />
+                            )}
+                          </div>
+                        </td>
                       </tr>
                       {expandedUlbId === ulb._id && (
                         <tr>
-                          <td colSpan="3" className="px-0 py-0">
+                          <td colSpan="5" className="px-0 py-0">
                             <UlbAdminsList ulbId={ulb._id} />
                           </td>
                         </tr>
@@ -136,7 +189,7 @@ export default function SuperAdminDashboard() {
                   ))}
                   {ulbs.length === 0 && (
                     <tr>
-                      <td colSpan="3" className="px-6 py-12 text-center text-gray-400">No ULBs found. Create one to get started.</td>
+                      <td colSpan="5" className="px-6 py-12 text-center text-gray-400">No ULBs found. Create one to get started.</td>
                     </tr>
                   )}
                 </tbody>
@@ -295,74 +348,51 @@ function UlbAdminsList({ ulbId }) {
 }
 
 function AdminDetailItem({ admin }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const members = useQuery(api.teamMembers.listMembersByAdmin, { adminId: admin._id });
+  const router = useRouter();
 
   return (
-    <div className="space-y-2">
-      <div 
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:border-primary-200 transition-all active:scale-[0.99]"
-      >
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
-            {admin.name.charAt(0)}
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-800">{admin.name}</p>
-            <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono">
-               <Phone className="h-2.5 w-2.5" />
-               {admin.phone}
-            </div>
-          </div>
+    <div 
+      onClick={() => router.push(`/super-admin/admin/${admin._id}`)}
+      className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:border-primary-200 hover:shadow-md transition-all active:scale-[0.99] group"
+    >
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs group-hover:bg-emerald-100 transition-colors">
+          {admin.name.charAt(0)}
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1 text-right">Password</p>
-            <p className="font-mono text-gray-600 text-xs"><code>{admin.password}</code></p>
-          </div>
-          <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <div>
+          <p className="text-sm font-semibold text-gray-800">{admin.name}</p>
+          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono">
+             <Phone className="h-2.5 w-2.5" />
+             {admin.phone}
           </div>
         </div>
       </div>
-
-      {isExpanded && (
-        <div className="ml-6 pl-6 border-l-2 border-gray-100 py-2 space-y-3 animate-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center justify-between">
-            <h5 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <ShieldCheck className="h-3 w-3" />
-              Managed Members ({members?.length || 0})
-            </h5>
-          </div>
-          
-          {members === undefined ? (
-            <div className="grid grid-cols-2 gap-2">
-               {[1, 2].map(i => <div key={i} className="h-10 bg-gray-50 rounded-lg animate-pulse" />)}
-            </div>
-          ) : members.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {members.map(member => (
-                <div key={member._id} className="bg-gray-50/50 p-2.5 rounded-xl border border-gray-100 flex items-center justify-between group hover:bg-white hover:border-primary-100 transition-all">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-lg bg-white border border-gray-100 text-primary-600 flex items-center justify-center font-bold text-[10px] group-hover:bg-primary-50 group-hover:border-primary-50 transition-colors">
-                      {member.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700">{member.name}</p>
-                      <p className="text-[9px] font-mono text-gray-400">{member.phone}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-gray-50/50 rounded-xl p-4 border border-dashed border-gray-200 text-center">
-              <p className="text-[10px] text-gray-400 italic font-medium">No members created by this admin yet.</p>
-            </div>
-          )}
+      <div className="flex items-center gap-6">
+        <div className="text-right">
+          <p className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1 text-right">Password</p>
+          <p className="font-mono text-gray-600 text-xs"><code>{admin.password}</code></p>
         </div>
-      )}
+        <button className="flex items-center gap-1.5 bg-gray-50 text-gray-500 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider group-hover:bg-primary-600 group-hover:text-white transition-all">
+          View Insights
+          <Search className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ title, value, icon: Icon, iconColor, iconBg }) {
+  return (
+    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-4 sm:p-6 border border-gray-100 shadow-sm transition-all hover:shadow-md hover:border-gray-200 duration-300">
+      <div className="flex items-center justify-between">
+        <div className={`h-12 w-12 rounded-xl flex items-center justify-center shadow-inner ${iconBg} ${iconColor}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-2">{title}</p>
+        <p className="text-3xl font-semibold text-gray-900 leading-none tracking-tight">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+      </div>
     </div>
   );
 }

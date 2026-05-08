@@ -8,10 +8,12 @@ import {
   MessageCircle, 
   Facebook, 
   Instagram,
-  Send
+  Send,
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
+import { QRCodeCanvas } from "qrcode.react";
 
 export default function ShareModal({ isOpen, onClose, trackingUrl, memberName }) {
   const { t } = useLanguage();
@@ -27,6 +29,62 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast.error(t("modals.error_copy_link"));
+    }
+  };
+
+  const handleDownloadQR = () => {
+    const qrCanvas = document.getElementById("qr-code-canvas");
+    if (qrCanvas) {
+      // Create a composite canvas for download
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      
+      const width = 320;
+      const height = 380;
+      canvas.width = width;
+      canvas.height = height;
+      
+      // White background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      
+      // Title
+      ctx.fillStyle = "#111827"; // text-gray-900
+      ctx.font = "bold 24px system-ui, -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Give your feedback", width / 2, 50);
+      
+      // Subtitle
+      ctx.fillStyle = "#6b7280"; // text-gray-500
+      ctx.font = "14px system-ui, -apple-system, sans-serif";
+      ctx.fillText("Scan this code to share your thoughts", width / 2, 80);
+
+      // Attribution
+      if (memberName) {
+        ctx.fillStyle = "#10b981"; // text-emerald-500
+        ctx.font = "bold 13px system-ui, -apple-system, sans-serif";
+        ctx.fillText(`Tracking for: ${memberName}`, width / 2, height - 30);
+      }
+      
+      // Draw QR Code
+      const qrSize = 200;
+      const qrX = (width - qrSize) / 2;
+      const qrY = 110;
+      
+      // Ensure crisp scaling
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+      const pngUrl = canvas
+        .toDataURL("image/png")
+        .replace("image/png", "image/octet-stream");
+      let downloadLink = document.createElement("a");
+      downloadLink.href = pngUrl;
+      downloadLink.download = `QR_${memberName || 'Feedback'}.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      toast.success("QR Code downloaded successfully");
     }
   };
 
@@ -78,6 +136,29 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
               {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
+        </div>
+
+        {/* QR Code Section */}
+        <div className="flex flex-col items-center justify-center mb-8">
+          <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm inline-block">
+            <QRCodeCanvas 
+              id="qr-code-canvas"
+              value={trackingUrl}
+              size={140}
+              bgColor={"#ffffff"}
+              fgColor={"#111827"}
+              level={"Q"}
+              includeMargin={false}
+              className="rounded-lg"
+            />
+          </div>
+          <button 
+            onClick={handleDownloadQR}
+            className="mt-4 flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 hover:text-primary-600 hover:bg-primary-50 border border-gray-100 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95"
+          >
+            <Download className="h-4 w-4" />
+            Download QR
+          </button>
         </div>
 
         {/* Social Buttons */}
