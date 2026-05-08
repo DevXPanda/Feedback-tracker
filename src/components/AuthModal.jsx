@@ -36,7 +36,9 @@ export default function AuthModal({ isOpen, onClose }) {
         onClose(); // Close the modal
 
         // Redirect based on role
-        if (loginUser.role === "admin") {
+        if (loginUser.role === "super_admin") {
+          window.location.href = "/super-admin";
+        } else if (loginUser.role === "admin") {
           window.location.href = "/dashboard";
         } else {
           window.location.href = "/team";

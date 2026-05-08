@@ -24,10 +24,25 @@ export default function TeamDetailsPage() {
   const router = useRouter();
   const teamId = params.teamId;
 
-  const team = useQuery(api.teams.getTeamById, { teamId });
-  const members = useQuery(api.users.getMembersByTeam, { teamId });
-  const activeTarget = useQuery(api.targets.getActiveTarget, { teamId });
-  const shareAnalytics = useQuery(api.teams.getShareAnalyticsByTeam, { teamId });
+  const [sessionUser, setSessionUser] = useState(null);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    setSessionUser(user);
+  }, []);
+
+  const team = useQuery(api.teams.getTeamById, 
+    sessionUser?.ulbId ? { teamId, ulbId: sessionUser.ulbId } : "skip"
+  );
+  const members = useQuery(api.teamMembers.getMembersByTeam, 
+    sessionUser?.ulbId ? { teamId, ulbId: sessionUser.ulbId } : "skip"
+  );
+  const activeTarget = useQuery(api.targets.getActiveTarget, 
+    sessionUser?.ulbId ? { teamId, ulbId: sessionUser.ulbId } : "skip"
+  );
+  const shareAnalytics = useQuery(api.teams.getShareAnalyticsByTeam, 
+    sessionUser?.ulbId ? { teamId, ulbId: sessionUser.ulbId } : "skip"
+  );
 
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);

@@ -7,6 +7,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { openAuthModal } = useAuthModal();
 
+
   useEffect(() => {
     router.replace("/");
     setTimeout(() => {

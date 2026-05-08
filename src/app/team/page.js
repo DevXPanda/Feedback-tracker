@@ -35,22 +35,22 @@ export default function TeamPanel() {
   }, [router]);
 
   const team = useQuery(api.teams.getTeamById,
-    user?.teamId ? { teamId: user.teamId } : "skip"
+    user?.teamId ? { teamId: user.teamId, ulbId: user.ulbId } : "skip"
   );
-  const memberStats = useQuery(api.users.getMemberStats,
-    user?._id ? { userId: user._id } : "skip"
+  const memberStats = useQuery(api.teamMembers.getMemberStats,
+    user?._id ? { memberId: user._id, ulbId: user.ulbId } : "skip"
   );
   const activeTarget = useQuery(api.targets.getActiveTarget,
-    user?._id ? { userId: user._id, teamId: user.teamId } : "skip"
+    user?._id ? { teamMemberId: user._id, teamId: user.teamId, ulbId: user.ulbId } : "skip"
   );
   const createPendingClick = useMutation(api.teams.createPendingClick);
-  const updateHeartbeat = useMutation(api.users.updateHeartbeat);
+  const updateHeartbeat = useMutation(api.teamMembers.updateHeartbeat);
 
   useEffect(() => {
     if (!user?._id) return;
-    updateHeartbeat({ userId: user._id });
+    updateHeartbeat({ memberId: user._id });
     const interval = setInterval(() => {
-      updateHeartbeat({ userId: user._id });
+      updateHeartbeat({ memberId: user._id });
     }, 20000);
     return () => clearInterval(interval);
   }, [user?._id, updateHeartbeat]);
@@ -78,7 +78,8 @@ export default function TeamPanel() {
     try {
       const pendingId = await createPendingClick({
         teamId: user.teamId,
-        userId: user._id,
+        teamMemberId: user._id,
+        ulbId: user.ulbId,
         lat: location.lat,
         lng: location.lng,
         source: "direct"
@@ -104,7 +105,7 @@ export default function TeamPanel() {
   }
 
   const trackingUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/track?memberId=${user._id}`
+    ? `${window.location.origin}/track?teamMemberId=${user._id}&ulbId=${user.ulbId}`
     : "";
 
   const performance = (memberStats?.todayClicks || 0) > 5 ? t("team_panel.excellent") : (memberStats?.todayClicks || 0) > 0 ? t("team_panel.good") : t("team_panel.neutral");

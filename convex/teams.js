@@ -3,42 +3,65 @@ import { v } from "convex/values";
 import { api } from "./_generated/api";
 
 export const createTeam = mutation({
-  args: { name: v.string(), ward: v.string() },
+  args: { 
+    name: v.string(), 
+    ward: v.string(), 
+    adminId: v.id("users"), // The "authenticated context"
+  },
   handler: async (ctx, args) => {
+    // 1. Get the logged-in admin from the context
+    const currentUser = await ctx.db.get(args.adminId);
+    
+    if (!currentUser) {
+      throw new Error("User context not found");
+    }
+
+    // 2. Automatically inherit ulbId from the logged-in Admin account
+    const ulbId = currentUser.ulbId;
+
+    if (!ulbId) {
+      throw new Error("Admin has no associated ULB");
+    }
+
     const teamId = await ctx.db.insert("teams", {
       name: args.name,
       ward: args.ward,
       clickCount: 0,
+      ulbId: ulbId, // Inherited automatically
     });
     return teamId;
   },
 });
 
 export const getTeams = query({
-  handler: async (ctx) => {
-    const teams = await ctx.db.query("teams").collect();
+  args: { ulbId: v.id("ulbs") },
+  handler: async (ctx, args) => {
+    const teams = await ctx.db
+      .query("teams")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .collect();
+      
     const now = Date.now();
     const startOfToday = new Date().setHours(0, 0, 0, 0);
 
     return await Promise.all(
       teams.map(async (team) => {
         const members = await ctx.db
-          .query("users")
+          .query("teamMembers")
           .withIndex("by_team", (q) => q.eq("teamId", team._id))
-          .filter((q) => q.eq(q.field("role"), "team"))
           .collect();
 
         const memberSummary = await Promise.all(
           members.map(async (member) => {
             const todayClicks = await ctx.db
               .query("clicks")
-              .withIndex("by_user", (q) => q.eq("userId", member._id))
+              .withIndex("by_team_member", (q) => q.eq("teamMemberId", member._id))
               .filter((q) => q.gte(q.field("timestamp"), startOfToday))
               .collect();
 
             const target = await ctx.db
               .query("targets")
-              .withIndex("by_user", (q) => q.eq("userId", member._id))
+              .withIndex("by_team_member", (q) => q.eq("teamMemberId", member._id))
               .filter((q) => q.and(
                 q.gte(q.field("endDate"), now),
                 q.lte(q.field("startDate"), now)
@@ -65,16 +88,20 @@ export const getTeams = query({
 });
 
 export const getTeamById = query({
-  args: { teamId: v.id("teams") },
+  args: { teamId: v.id("teams"), ulbId: v.id("ulbs") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.teamId);
+    const team = await ctx.db.get(args.teamId);
+    if (!team || team.ulbId !== args.ulbId) return null;
+    return team;
   },
 });
 
 export const incrementClick = mutation({
   args: { 
     teamId: v.optional(v.id("teams")), 
+    teamMemberId: v.optional(v.id("teamMembers")),
     userId: v.optional(v.id("users")),
+    ulbId: v.id("ulbs"),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
     source: v.string()
@@ -90,21 +117,23 @@ export const incrementClick = mutation({
       }
     }
 
-    // 2. Increment User count if provided
-    if (args.userId) {
-      const user = await ctx.db.get(args.userId);
-      if (user) {
-        await ctx.db.patch(args.userId, {
-          clickCount: (user.clickCount || 0) + 1,
+    // 2. Increment Team Member count if provided
+    if (args.teamMemberId) {
+      const member = await ctx.db.get(args.teamMemberId);
+      if (member) {
+        await ctx.db.patch(args.teamMemberId, {
+          clickCount: (member.clickCount || 0) + 1,
+          todayCount: (member.todayCount || 0) + 1,
         });
       }
     }
 
     // 3. Record individual click event for analytics
-    if (args.teamId && args.userId) {
+    if (args.teamId && args.teamMemberId) {
       await ctx.db.insert("clicks", {
-        userId: args.userId,
+        teamMemberId: args.teamMemberId,
         teamId: args.teamId,
+        ulbId: args.ulbId,
         timestamp: Date.now(),
         lat: args.lat,
         lng: args.lng,
@@ -131,9 +160,9 @@ export const updateTeam = mutation({
 export const deleteTeam = mutation({
   args: { teamId: v.id("teams") },
   handler: async (ctx, args) => {
-    // Optionally delete all members of this team first
+    // Delete all members of this team first
     const members = await ctx.db
-      .query("users")
+      .query("teamMembers")
       .withIndex("by_team", (q) => q.eq("teamId", args.teamId))
       .collect();
     
@@ -165,92 +194,26 @@ export const deleteTeam = mutation({
   },
 });
 
-export const getGlobalStats = query({
-  handler: async (ctx) => {
-    const users = await ctx.db.query("users").filter(q => q.eq(q.field("role"), "team")).collect();
-    const totalClicks = users.reduce((acc, user) => acc + (user.clickCount || 0), 0);
-    const totalMembers = users.length;
 
-    // Calculate trend & Today's feedback
-    const now = Date.now();
-    const startOfToday = new Date().setHours(0, 0, 0, 0);
-    const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
-    const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
-
-    const todayClicks = await ctx.db
-      .query("clicks")
-      .withIndex("by_timestamp", (q) => q.gte("timestamp", startOfToday))
-      .collect();
-
-    const previousClicks = await ctx.db
-      .query("clicks")
-      .withIndex("by_timestamp", (q) => 
-        q.gt("timestamp", fortyEightHoursAgo).lt("timestamp", twentyFourHoursAgo)
-      )
-      .collect();
-
-    const todayCount = todayClicks.length;
-    const previousCount = previousClicks.length;
-
-    let trend = 0;
-    if (previousCount > 0) {
-      trend = Math.round(((todayCount - previousCount) / previousCount) * 100);
-    } else if (todayCount > 0) {
-      trend = 100;
-    }
-
-    // Calculate Targets
-    const activeTargets = await ctx.db
-      .query("targets")
-      .filter((q) => q.and(
-        q.gte(q.field("endDate"), now),
-        q.lte(q.field("startDate"), now)
-      ))
-      .collect();
-
-    let totalTarget = 0;
-    let targetAchievement = 0;
-
-    for (const target of activeTargets) {
-      totalTarget += target.target;
-      if (target.userId) {
-        const clicks = await ctx.db
-          .query("clicks")
-          .withIndex("by_user", (q) => q.eq("userId", target.userId))
-          .filter((q) => q.and(
-            q.gte(q.field("timestamp"), target.startDate),
-            q.lte(q.field("timestamp"), target.endDate)
-          ))
-          .collect();
-        targetAchievement += clicks.length;
-      }
-    }
-
-    return {
-      totalClicks,
-      totalMembers,
-      todayCount,
-      totalTarget,
-      targetAchievement,
-      clickTrend: trend >= 0 ? `+${trend}%` : `${trend}%`,
-    };
-  },
-});
 
 export const getDetailedLogs = query({
   args: { 
-    userId: v.optional(v.id("users")),
+    teamMemberId: v.optional(v.id("teamMembers")),
+    ulbId: v.id("ulbs"),
     limit: v.optional(v.number()),
     startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let clicksQuery = ctx.db.query("clicks");
+    let clicksQuery = ctx.db
+      .query("clicks")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId));
 
-    if (args.teamId) {
-      clicksQuery = clicksQuery.withIndex("by_team", (q) => q.eq("teamId", args.teamId));
-    } else if (args.userId) {
-      clicksQuery = clicksQuery.withIndex("by_user", (q) => q.eq("userId", args.userId));
+    if (args.teamMemberId) {
+      clicksQuery = ctx.db
+        .query("clicks")
+        .withIndex("by_team_member", (q) => q.eq("teamMemberId", args.teamMemberId))
+        .filter(q => q.eq(q.field("ulbId"), args.ulbId));
     }
 
     if (args.startDate) {
@@ -264,11 +227,11 @@ export const getDetailedLogs = query({
 
     const logs = await Promise.all(
       clicks.map(async (click) => {
-        const user = await ctx.db.get(click.userId);
-        const team = await ctx.db.get(click.teamId);
+        const member = await ctx.db.get(click.teamMemberId);
+        const team = click.teamId ? await ctx.db.get(click.teamId) : null;
         return {
           ...click,
-          userName: user?.name || "Unknown",
+          userName: member?.name || "Unknown",
           teamName: team?.name || "Unknown",
           ward: team?.ward || "Unknown",
         };
@@ -280,8 +243,13 @@ export const getDetailedLogs = query({
 });
 
 export const getShareLinkAnalytics = query({
-  handler: async (ctx) => {
-    const clicks = await ctx.db.query("clicks").collect();
+  args: { ulbId: v.id("ulbs") },
+  handler: async (ctx, args) => {
+    const clicks = await ctx.db
+      .query("clicks")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .collect();
+      
     const directCount = clicks.filter(c => c.source === "direct").length;
     const sharedCount = clicks.filter(c => c.source === "shared").length;
     
@@ -293,28 +261,30 @@ export const getShareLinkAnalytics = query({
     };
   }
 });
+
 export const getShareAnalyticsByTeam = query({
-  args: { teamId: v.id("teams") },
+  args: { teamId: v.id("teams"), ulbId: v.id("ulbs") },
   handler: async (ctx, args) => {
     const members = await ctx.db
-      .query("users")
-      .withIndex("by_team", (q) => q.eq("teamId", args.teamId))
+      .query("teamMembers")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .filter((q) => q.eq(q.field("teamId"), args.teamId))
       .collect();
-
+    
     const analytics = await Promise.all(
       members.map(async (member) => {
         const clicks = await ctx.db
           .query("clicks")
-          .withIndex("by_user", (q) => q.eq("userId", member._id))
+          .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+          .filter((q) => q.eq(q.field("teamMemberId"), member._id))
           .collect();
-
+        
         const direct = clicks.filter((c) => c.source === "direct").length;
         const shared = clicks.filter((c) => c.source === "shared").length;
         const total = clicks.length;
 
         return {
-          memberId: member._id,
-          memberName: member.name,
+          name: member.name,
           direct,
           shared,
           total,
@@ -326,12 +296,14 @@ export const getShareAnalyticsByTeam = query({
     return analytics;
   },
 });
+
 export const getMemberShareAnalytics = query({
-  args: { userId: v.id("users") },
+  args: { memberId: v.id("teamMembers"), ulbId: v.id("ulbs") },
   handler: async (ctx, args) => {
     const clicks = await ctx.db
       .query("clicks")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .filter((q) => q.eq(q.field("teamMemberId"), args.memberId))
       .collect();
 
     const direct = clicks.filter((c) => c.source === "direct").length;
@@ -352,14 +324,20 @@ export const getMemberShareAnalytics = query({
 export const createPendingClick = mutation({
   args: {
     teamId: v.optional(v.id("teams")),
-    userId: v.id("users"),
+    teamMemberId: v.id("teamMembers"),
+    ulbId: v.id("ulbs"),
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
     source: v.string(),
   },
   handler: async (ctx, args) => {
     const pendingId = await ctx.db.insert("pendingClicks", {
-      ...args,
+      teamMemberId: args.teamMemberId,
+      teamId: args.teamId,
+      ulbId: args.ulbId,
+      lat: args.lat,
+      lng: args.lng,
+      source: args.source,
       timestamp: Date.now(),
       lastHeartbeat: Date.now(),
     });
@@ -406,14 +384,18 @@ export const validatePendingClick = mutation({
         }
       }
 
-      const user = await ctx.db.get(pending.userId);
-      await ctx.db.patch(pending.userId, {
-        clickCount: (user.clickCount || 0) + 1,
-      });
+      const member = await ctx.db.get(pending.teamMemberId);
+      if (member) {
+        await ctx.db.patch(pending.teamMemberId, {
+          clickCount: (member.clickCount || 0) + 1,
+          todayCount: (member.todayCount || 0) + 1,
+        });
+      }
 
       await ctx.db.insert("clicks", {
-        userId: pending.userId,
+        teamMemberId: pending.teamMemberId,
         teamId: pending.teamId,
+        ulbId: pending.ulbId,
         timestamp: pending.timestamp,
         lat: pending.lat,
         lng: pending.lng,
@@ -428,7 +410,7 @@ export const validatePendingClick = mutation({
         const existingFlag = await ctx.db
           .query("locationFlags")
           .withIndex("by_location", (q) => 
-            q.eq("userId", pending.userId).eq("lat", roundedLat).eq("lng", roundedLng)
+            q.eq("teamMemberId", pending.teamMemberId).eq("lat", roundedLat).eq("lng", roundedLng)
           )
           .unique();
 
@@ -436,12 +418,12 @@ export const validatePendingClick = mutation({
           const newCount = existingFlag.count + 1;
           await ctx.db.patch(existingFlag._id, {
             count: newCount,
-            // If it crosses threshold, mark as pending if it was cleared or nothing
             status: newCount > 10 && existingFlag.status !== "problem" ? "pending" : existingFlag.status
           });
         } else {
           await ctx.db.insert("locationFlags", {
-            userId: pending.userId,
+            teamMemberId: pending.teamMemberId,
+            ulbId: pending.ulbId,
             lat: roundedLat,
             lng: roundedLng,
             count: 1,
@@ -449,19 +431,22 @@ export const validatePendingClick = mutation({
           });
         }
       }
-    }
 
-    // Cleanup
-    await ctx.db.delete(args.pendingId);
+      await ctx.db.delete(args.pendingId);
+    } else {
+      // Expired session - delete pending
+      await ctx.db.delete(args.pendingId);
+    }
   },
 });
 
 export const getMemberFlags = query({
-  args: { userId: v.id("users") },
+  args: { memberId: v.id("teamMembers"), ulbId: v.id("ulbs") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("locationFlags")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .filter((q) => q.eq(q.field("teamMemberId"), args.memberId))
       .filter((q) => q.neq(q.field("status"), "cleared"))
       .collect();
   },
@@ -477,29 +462,120 @@ export const updateFlagStatus = mutation({
   },
 });
 
+export const getGlobalStats = query({
+  args: { ulbId: v.id("ulbs") },
+  handler: async (ctx, args) => {
+    const teams = await ctx.db
+      .query("teams")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .collect();
+    
+    const members = await ctx.db
+      .query("teamMembers")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .collect();
+
+    const totalClicks = teams.reduce((acc, team) => acc + (team.clickCount || 0), 0);
+    const totalMembers = members.length;
+
+    // Calculate trend & Today's feedback
+    const now = Date.now();
+    const startOfToday = new Date().setHours(0, 0, 0, 0);
+    const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
+    const fortyEightHoursAgo = now - 48 * 60 * 60 * 1000;
+
+    const todayClicks = await ctx.db
+      .query("clicks")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .filter((q) => q.gte(q.field("timestamp"), startOfToday))
+      .collect();
+
+    const previousClicks = await ctx.db
+      .query("clicks")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .filter((q) => 
+        q.and(
+          q.gt(q.field("timestamp"), fortyEightHoursAgo),
+          q.lt(q.field("timestamp"), twentyFourHoursAgo)
+        )
+      )
+      .collect();
+
+    const todayCount = todayClicks.length;
+    const previousCount = previousClicks.length;
+    
+    // Trend calculation
+    let trend = 0;
+    if (previousCount > 0) {
+      trend = Math.round(((todayCount - previousCount) / previousCount) * 100);
+    } else if (todayCount > 0) {
+      trend = 100;
+    }
+
+    // Calculate Targets
+    const activeTargets = await ctx.db
+      .query("targets")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .filter((q) => q.and(
+        q.gte(q.field("endDate"), now),
+        q.lte(q.field("startDate"), now)
+      ))
+      .collect();
+
+    let totalTarget = 0;
+    let targetAchievement = 0;
+
+    for (const target of activeTargets) {
+      totalTarget += target.target;
+      if (target.teamMemberId) {
+        const clicks = await ctx.db
+          .query("clicks")
+          .withIndex("by_team_member", (q) => q.eq("teamMemberId", target.teamMemberId))
+          .filter((q) => q.and(
+            q.gte(q.field("timestamp"), target.startDate),
+            q.lte(q.field("timestamp"), target.endDate)
+          ))
+          .collect();
+        targetAchievement += clicks.length;
+      }
+    }
+
+    return {
+      totalTeams: teams.length,
+      totalMembers,
+      totalClicks,
+      todayCount,
+      totalTarget,
+      targetAchievement,
+      trend: trend >= 0 ? `+${trend}%` : `${trend}%`,
+    };
+  },
+});
+
 export const getAllMemberStats = query({
-  handler: async (ctx) => {
-    const users = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("role"), "team"))
+  args: { ulbId: v.id("ulbs") },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("teamMembers")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
       .collect();
 
     const now = Date.now();
     const startOfToday = new Date().setHours(0, 0, 0, 0);
 
     return await Promise.all(
-      users.map(async (user) => {
-        const team = user.teamId ? await ctx.db.get(user.teamId) : null;
+      members.map(async (member) => {
+        const team = member.teamId ? await ctx.db.get(member.teamId) : null;
         
         const todayClicks = await ctx.db
           .query("clicks")
-          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .withIndex("by_team_member", (q) => q.eq("teamMemberId", member._id))
           .filter((q) => q.gte(q.field("timestamp"), startOfToday))
           .collect();
 
         const target = await ctx.db
           .query("targets")
-          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .withIndex("by_team_member", (q) => q.eq("teamMemberId", member._id))
           .filter((q) => q.and(
             q.gte(q.field("endDate"), now),
             q.lte(q.field("startDate"), now)
@@ -512,7 +588,7 @@ export const getAllMemberStats = query({
         if (target) {
           const targetClicks = await ctx.db
             .query("clicks")
-            .withIndex("by_user", (q) => q.eq("userId", user._id))
+            .withIndex("by_team_member", (q) => q.eq("teamMemberId", member._id))
             .filter((q) => q.and(
               q.gte(q.field("timestamp"), target.startDate),
               q.lte(q.field("timestamp"), target.endDate)
@@ -523,15 +599,15 @@ export const getAllMemberStats = query({
         }
 
         return {
-          _id: user._id,
-          name: user.name,
+          _id: member._id,
+          name: member.name,
           teamName: team?.name || "No Team",
-          total: user.clickCount || 0,
+          total: member.clickCount || 0,
           today: todayClicks.length,
           target: target ? target.target : null,
           targetAchievement,
           targetPercentage,
-          lastActive: user.lastActive,
+          lastActive: member.lastActive,
         };
       })
     );

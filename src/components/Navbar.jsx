@@ -44,13 +44,26 @@ export default function Navbar() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link 
-            href={user?.role === "admin" ? "/dashboard" : user?.role === "team" ? "/team" : "/"} 
+            href={user?.role === "super_admin" ? "/super-admin" : user?.role === "admin" ? "/dashboard" : user?.role === "team" ? "/team" : "/"} 
             className="flex items-center gap-2.5 group"
           >
             <span className="text-base font-semibold font-display tracking-tight text-gray-900 block">
               Feedback<span className="text-primary-600">Tracker</span>
             </span>
           </Link>
+          
+          {user?.role === "super_admin" && (
+            <Link 
+              href="/super-admin"
+              className={clsx(
+                "hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors",
+                pathname === "/super-admin" ? "text-primary-600" : "text-gray-500 hover:text-gray-900"
+              )}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Manage ULBs
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">

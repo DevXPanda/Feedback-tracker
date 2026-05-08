@@ -31,10 +31,10 @@ export default function MemberLogs() {
   }, [router]);
 
   const stats = useQuery(api.users.getMemberStats, 
-    user?._id ? { userId: user._id } : "skip"
+    user?._id && user?.ulbId ? { userId: user._id, ulbId: user.ulbId } : "skip"
   );
   const logs = useQuery(api.users.getMemberLogs, 
-    user?._id ? { userId: user._id } : "skip"
+    user?._id && user?.ulbId ? { userId: user._id, ulbId: user.ulbId } : "skip"
   );
 
   if (!user || logs === undefined || stats === undefined) {

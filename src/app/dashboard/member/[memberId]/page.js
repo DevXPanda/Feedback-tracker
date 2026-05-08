@@ -33,28 +33,41 @@ export default function MemberDetailsPage() {
   const userId = params.memberId;
   const [user, setUser] = useState(null);
 
+  const [sessionUser, setSessionUser] = useState(null);
+
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (!storedUser || storedUser.role !== "admin") {
       router.push("/");
     } else {
-      setUser(storedUser);
+      setSessionUser(storedUser);
     }
   }, [router]);
 
-  const member = useQuery(api.users.getUserById, { userId });
-  const stats = useQuery(api.users.getMemberStats, { userId });
-  const activeTarget = useQuery(api.targets.getActiveTarget, { userId });
-  const logs = useQuery(api.teams.getDetailedLogs, {
-    userId,
-    limit: 50,
-    startDate: activeTarget?.startDate,
-    endDate: activeTarget?.endDate
-  });
-  const flags = useQuery(api.teams.getMemberFlags, { userId });
+  const member = useQuery(api.teamMembers.getById, 
+    { memberId: userId }
+  );
+  const stats = useQuery(api.teamMembers.getMemberStats, 
+    sessionUser?.ulbId ? { memberId: userId, ulbId: sessionUser.ulbId } : "skip"
+  );
+  const activeTarget = useQuery(api.targets.getActiveTarget, 
+    sessionUser?.ulbId ? { teamMemberId: userId, ulbId: sessionUser.ulbId } : "skip"
+  );
+  const logs = useQuery(api.teams.getDetailedLogs, 
+    sessionUser?.ulbId ? {
+      teamMemberId: userId,
+      ulbId: sessionUser.ulbId,
+      limit: 50,
+      startDate: activeTarget?.startDate,
+      endDate: activeTarget?.endDate
+    } : "skip"
+  );
+  const flags = useQuery(api.teams.getMemberFlags, 
+    sessionUser?.ulbId ? { memberId: userId, ulbId: sessionUser.ulbId } : "skip"
+  );
   const updateFlagStatus = useMutation(api.teams.updateFlagStatus);
 
-  if (!user || member === undefined || stats === undefined || flags === undefined) {
+  if (member === undefined || stats === undefined || flags === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-600 border-t-transparent"></div>

@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { Plus, UserPlus, Shield, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
+import { getSession } from "@/lib/auth";
 
 export default function AddTeamForm() {
+  // Force rebuild - tenant isolation fix
   const [activeTab, setActiveTab] = useState("team"); // 'team' or 'member'
   const [loading, setLoading] = useState(false);
   
@@ -23,17 +25,38 @@ export default function AddTeamForm() {
     password: "",
   });
 
-  const teams = useQuery(api.teams.getTeams);
+  const [sessionUser, setSessionUser] = useState(null);
+
+  useEffect(() => {
+    const user = getSession();
+    if (user) {
+      setSessionUser(user);
+    }
+  }, []);
+
+  const teams = useQuery(api.teams.getTeams, 
+    sessionUser?.ulbId ? { ulbId: sessionUser.ulbId } : "skip"
+  );
   const createTeamMutation = useMutation(api.teams.createTeam);
-  const createUserMutation = useMutation(api.users.createUser);
+  const createTeamMemberMutation = useMutation(api.teamMembers.createTeamMember);
 
   const handleCreateTeam = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const currentUlbId = sessionUser?.ulbId || getSession()?.ulbId;
+    
+    if (!currentUlbId) {
+      toast.error("Session invalid: ULB ID missing. Please log out and log in again.");
+      setLoading(false);
+      return;
+    }
+
     try {
       await createTeamMutation({
         name: teamData.name,
         ward: teamData.ward,
+        adminId: sessionUser?._id || getSession()?._id,
       });
       toast.success("Team created successfully!");
       setTeamData({ name: "", ward: "" });
@@ -51,13 +74,22 @@ export default function AddTeamForm() {
       return;
     }
     setLoading(true);
+
+    const currentAdminId = sessionUser?._id || getSession()?._id;
+    
+    if (!currentAdminId) {
+      toast.error("Session invalid: Admin context missing. Please log out and log in again.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await createUserMutation({
+      await createTeamMemberMutation({
         name: memberData.name,
         phone: memberData.phone,
         password: memberData.password,
-        role: "team",
         teamId: memberData.teamId,
+        adminId: currentAdminId,
       });
       toast.success("Member added successfully!");
       setMemberData({ teamId: "", name: "", phone: "", password: "" });

@@ -1,11 +1,15 @@
 export const setSession = (user) => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !user) return;
   
-  // Persist in localStorage as fallback and for easy access
+  // Security check: Admins must have a ulbId (except super_admin)
+  if (user.role === 'admin' && !user.ulbId) {
+    console.error("Attempted to set admin session without ulbId");
+  }
+
+  // Persist in localStorage
   localStorage.setItem("user", JSON.stringify(user));
   
-  // Persist in Cookie for "secure" session handling (can be read by server if needed)
-  // Expires in 30 days
+  // Persist in Cookie
   const expires = new Date();
   expires.setDate(expires.getDate() + 30);
   document.cookie = `user_session=${encodeURIComponent(JSON.stringify(user))}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
@@ -20,7 +24,8 @@ export const getSession = () => {
   
   if (sessionCookie) {
     try {
-      return JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]));
+      const user = JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]));
+      return user;
     } catch (e) {
       console.error("Failed to parse session cookie", e);
     }

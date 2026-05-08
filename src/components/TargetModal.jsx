@@ -1,10 +1,11 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { X, Target, Calendar, Loader2, Search, User } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
+import { getSession } from "@/lib/auth";
 
 export default function TargetModal({ isOpen, onClose, initialUserId }) {
   const { t } = useLanguage();
@@ -15,8 +16,16 @@ export default function TargetModal({ isOpen, onClose, initialUserId }) {
   const [label, setLabel] = useState(t("modals.daily_target"));
   const [isLoading, setIsLoading] = useState(false);
   const [searchMember, setSearchMember] = useState("");
+  const [sessionUser, setSessionUser] = useState(null);
 
-  const users = useQuery(api.users.getUsers) || [];
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    setSessionUser(user);
+  }, []);
+
+  const users = useQuery(api.users.getUsers, 
+    sessionUser?.ulbId ? { ulbId: sessionUser.ulbId } : "skip"
+  ) || [];
   const setTargetMutation = useMutation(api.targets.setTarget);
 
   const filteredUsers = useMemo(() => {
@@ -39,6 +48,14 @@ export default function TargetModal({ isOpen, onClose, initialUserId }) {
 
     setIsLoading(true);
     try {
+      const currentUlbId = sessionUser?.ulbId || getSession()?.ulbId;
+      
+      if (!currentUlbId) {
+        toast.error("Session invalid: ULB ID missing. Please log out and log in again.");
+        setIsLoading(false);
+        return;
+      }
+
       const selectedUser = users.find(u => u._id === (initialUserId || userId));
       await setTargetMutation({
         target: parseInt(target),
@@ -46,6 +63,7 @@ export default function TargetModal({ isOpen, onClose, initialUserId }) {
         endDate: new Date(endDate).setHours(23, 59, 59, 999),
         teamId: selectedUser?.teamId,
         userId: initialUserId || userId,
+        ulbId: currentUlbId,
         label,
       });
       toast.success(t("common.save"));

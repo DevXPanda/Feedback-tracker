@@ -7,10 +7,11 @@ export const createUser = mutation({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     password: v.string(),
-    role: v.union(v.literal("admin"), v.literal("team")),
-    teamId: v.optional(v.id("teams")),
+    role: v.literal("admin"),
+    ulbId: v.id("ulbs"),
   },
   handler: async (ctx, args) => {
+    // Check for duplicate email
     if (args.email) {
       const existing = await ctx.db
         .query("users")
@@ -18,7 +19,8 @@ export const createUser = mutation({
         .unique();
       if (existing) throw new Error("User with this email already exists");
     }
-    
+
+    // Check for duplicate phone
     if (args.phone) {
       const existing = await ctx.db
         .query("users")
@@ -26,22 +28,21 @@ export const createUser = mutation({
         .unique();
       if (existing) throw new Error("User with this phone number already exists");
     }
-    
+
     return await ctx.db.insert("users", {
       name: args.name,
       email: args.email,
       phone: args.phone,
       password: args.password,
-      clickCount: 0,
       role: args.role,
-      teamId: args.teamId,
+      ulbId: args.ulbId,
     });
   },
 });
 
-export const setupAdmin = mutation({
+export const setupSuperAdmin = mutation({
   handler: async (ctx) => {
-    const phone = "7836055511";
+    const phone = "9811066609";
     const password = "1";
     
     const existing = await ctx.db
@@ -52,112 +53,161 @@ export const setupAdmin = mutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         password: password,
-        role: "admin",
-        name: "Super Admin"
+        role: "super_admin",
+        name: "Global Super Admin"
       });
-      return "Admin credentials updated";
+      return "Super Admin credentials updated";
     }
 
     await ctx.db.insert("users", {
-      name: "Super Admin",
+      name: "Global Super Admin",
       phone: phone,
       password: password,
-      clickCount: 0,
-      role: "admin",
+      role: "super_admin",
     });
 
-    return "Admin created";
+    return "Super Admin created";
   },
 });
 
 export const login = query({
   args: { identifier: v.string(), password: v.string() },
   handler: async (ctx, args) => {
-    // Only try phone
-    const user = await ctx.db
+    // 1. Try users table (Admins/Super Admins)
+    let user = await ctx.db
       .query("users")
       .withIndex("by_phone", (q) => q.eq("phone", args.identifier))
       .unique();
     
-    if (!user || user.password !== args.password) {
-      return null;
+    if (!user) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", args.identifier))
+        .unique();
     }
     
-    return user;
-  },
-});
-
-export const getMembersByTeam = query({
-  args: { teamId: v.id("teams") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("users")
-      .filter((q) => q.and(
-        q.eq(q.field("teamId"), args.teamId),
-        q.eq(q.field("role"), "team")
-      ))
-      .collect();
-  },
-});
-
-export const updateHeartbeat = mutation({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (user) {
-      await ctx.db.patch(args.userId, {
-        lastActive: Date.now(),
-      });
+    if (user && user.password === args.password) {
+      return user;
     }
+
+    // 2. Try teamMembers table
+    const member = await ctx.db
+      .query("teamMembers")
+      .withIndex("by_phone", (q) => q.eq("phone", args.identifier))
+      .unique();
+    
+    if (member && member.password === args.password) {
+      return { ...member, role: "team" }; // Inject role for frontend compatibility
+    }
+    
+    return null;
   },
 });
 
 export const getUsers = query({
-  handler: async (ctx) => {
-    return await ctx.db.query("users").collect();
+  args: { ulbId: v.id("ulbs") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .collect();
   },
 });
 
 export const getUserById = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.userId);
-  },
-});
-
-export const getMemberStats = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.id("users"), ulbId: v.optional(v.id("ulbs")) },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return null;
+    if (user.role !== "super_admin" && args.ulbId && user.ulbId !== args.ulbId) {
+      return null;
+    }
+    return user;
+  },
+});
 
-    const startOfToday = new Date().setHours(0, 0, 0, 0);
+export const createAdmin = mutation({
+  args: {
+    name: v.string(),
+    phone: v.string(),
+    password: v.string(),
+    ulbId: v.id("ulbs"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_phone", (q) => q.eq("phone", args.phone))
+      .unique();
+    if (existing) throw new Error("User with this phone number already exists");
 
-    const todayClicks = await ctx.db
-      .query("clicks")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.gte(q.field("timestamp"), startOfToday))
+    return await ctx.db.insert("users", {
+      name: args.name,
+      phone: args.phone,
+      password: args.password,
+      role: "admin",
+      ulbId: args.ulbId,
+    });
+  },
+});
+
+export const listAdminsByUlb = query({
+  args: { ulbId: v.id("ulbs") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_ulb", (q) => q.eq("ulbId", args.ulbId))
+      .filter((q) => q.eq(q.field("role"), "admin"))
+      .collect();
+  },
+});
+
+// Migration Mutation
+export const migrateTeamMembers = mutation({
+  handler: async (ctx) => {
+    // This is a one-time migration
+    const oldMembers = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("role"), "team"))
       .collect();
 
-    return {
-      totalClicks: user.clickCount || 0,
-      todayClicks: todayClicks.length,
-      name: user.name,
-    };
+    let migratedCount = 0;
+    for (const member of oldMembers) {
+      // Check if already migrated (by phone)
+      const existing = await ctx.db
+        .query("teamMembers")
+        .withIndex("by_phone", (q) => q.eq("phone", member.phone))
+        .unique();
+      
+      if (!existing && member.teamId && member.ulbId) {
+        await ctx.db.insert("teamMembers", {
+          name: member.name,
+          phone: member.phone || "",
+          password: member.password,
+          teamId: member.teamId,
+          ulbId: member.ulbId,
+          adminId: member.createdBy || (await getFirstAdminId(ctx, member.ulbId)), // Fallback
+          clickCount: member.clickCount || 0,
+          todayCount: 0,
+          status: "active",
+          lastActive: member.lastActive || Date.now(),
+        });
+        
+        // Delete from users table after migration
+        await ctx.db.delete(member._id);
+        migratedCount++;
+      }
+    }
+    return `Migrated ${migratedCount} members`;
   },
 });
 
-export const getMemberLogs = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const logs = await ctx.db
-      .query("clicks")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .order("desc")
-      .take(50);
-    
-    return logs;
-  },
-});
+async function getFirstAdminId(ctx, ulbId) {
+  const admin = await ctx.db
+    .query("users")
+    .withIndex("by_ulb", (q) => q.eq("ulbId", ulbId))
+    .filter((q) => q.eq(q.field("role"), "admin"))
+    .first();
+  return admin ? admin._id : undefined;
+}
 
 // End of users logic

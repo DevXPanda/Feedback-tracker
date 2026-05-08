@@ -10,7 +10,9 @@
 
 import type * as seed from "../seed.js";
 import type * as targets from "../targets.js";
+import type * as teamMembers from "../teamMembers.js";
 import type * as teams from "../teams.js";
+import type * as ulbs from "../ulbs.js";
 import type * as users from "../users.js";
 
 import type {
@@ -22,7 +24,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   targets: typeof targets;
+  teamMembers: typeof teamMembers;
   teams: typeof teams;
+  ulbs: typeof ulbs;
   users: typeof users;
 }>;
 

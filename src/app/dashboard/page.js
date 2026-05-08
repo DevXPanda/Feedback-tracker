@@ -36,7 +36,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || user.role !== "admin") {
+    if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
       router.push("/");
     } else {
       setStoredUser(user);
@@ -44,10 +44,14 @@ export default function Dashboard() {
   }, [router]);
 
   const user = useQuery(api.users.getUserById,
-    storedUser?._id ? { userId: storedUser._id } : "skip"
+    storedUser?._id ? { userId: storedUser._id, ulbId: storedUser.ulbId } : "skip"
   );
-  const stats = useQuery(api.teams.getGlobalStats);
-  const allMemberStats = useQuery(api.teams.getAllMemberStats);
+  const stats = useQuery(api.teams.getGlobalStats, 
+    storedUser?.ulbId ? { ulbId: storedUser.ulbId } : "skip"
+  );
+  const allMemberStats = useQuery(api.teams.getAllMemberStats,
+    storedUser?.ulbId ? { ulbId: storedUser.ulbId } : "skip"
+  );
 
   if (!user || !stats) {
     return (
@@ -62,7 +66,7 @@ export default function Dashboard() {
   );
 
   const trackingUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/track?memberId=${user._id}`
+    ? `${window.location.origin}/track?teamMemberId=${user._id}&ulbId=${user.ulbId}`
     : "";
 
   return (

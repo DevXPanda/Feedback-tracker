@@ -30,9 +30,15 @@ function TrackContent({ t }) {
     const track = async () => {
       const teamId = searchParams.get("teamId");
       const memberId = searchParams.get("memberId") || searchParams.get("userId");
+      const ulbId = searchParams.get("ulbId");
 
       if (!teamId && !memberId) {
         setStatus(t("tracking.invalid_link"));
+        return;
+      }
+
+      if (!ulbId) {
+        setStatus("Invalid Tenant Context");
         return;
       }
 
@@ -61,7 +67,8 @@ function TrackContent({ t }) {
       try {
         const pendingId = await createPendingClick({
           teamId: teamId || undefined,
-          userId: memberId || undefined,
+          teamMemberId: memberId || undefined,
+          ulbId: ulbId,
           lat: location.lat,
           lng: location.lng,
           source: "shared"

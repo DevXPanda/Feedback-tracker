@@ -5,26 +5,37 @@ import { api } from "convex/_generated/api";
 import { X, UserPlus, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
+import { getSession } from "@/lib/auth";
 
 export default function CreateActionModal({ isOpen, onClose }) {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [memberData, setMemberData] = useState({ name: "", phone: "", password: "" });
 
-  const createUserMutation = useMutation(api.users.createUser);
+  const createTeamMemberMutation = useMutation(api.teamMembers.createTeamMember);
 
   if (!isOpen) return null;
 
   const handleAddMember = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Auto-read the logged-in admin's ID from session
+    const session = getSession();
+    const adminId = session?._id;
+
+    if (!adminId) {
+      toast.error("Session invalid. Please log in again.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await createUserMutation({
+      await createTeamMemberMutation({
         name: memberData.name,
         phone: memberData.phone,
         password: memberData.password,
-        role: "team",
-        // teamId is explicitly not sent here, making it an independent member
+        adminId: adminId,
       });
       
       toast.success(t("common.save"));
