@@ -107,17 +107,31 @@ export const incrementClick = mutation({
     source: v.string()
   },
   handler: async (ctx, args) => {
-    // 1. Increment Team count if provided
-    if (args.teamId) {
-      const team = await ctx.db.get(args.teamId);
+    // 1. Resolve Team and Admin info if missing
+    let teamId = args.teamId;
+    let adminId;
+    let ulbId = args.ulbId;
+
+    if (args.teamMemberId) {
+      const member = await ctx.db.get(args.teamMemberId);
+      if (member) {
+        teamId = teamId || member.teamId;
+        adminId = member.adminId;
+        ulbId = ulbId || member.ulbId;
+      }
+    }
+
+    // 2. Increment Team count
+    if (teamId) {
+      const team = await ctx.db.get(teamId);
       if (team) {
-        await ctx.db.patch(args.teamId, {
-          clickCount: team.clickCount + 1,
+        await ctx.db.patch(teamId, {
+          clickCount: (team.clickCount || 0) + 1,
         });
       }
     }
 
-    // 2. Increment Team Member count if provided
+    // 3. Increment Team Member count
     if (args.teamMemberId) {
       const member = await ctx.db.get(args.teamMemberId);
       if (member) {
@@ -128,18 +142,93 @@ export const incrementClick = mutation({
       }
     }
 
-    // 3. Record individual click event for analytics
-    if (args.teamId && args.teamMemberId) {
-      await ctx.db.insert("clicks", {
-        teamMemberId: args.teamMemberId,
-        teamId: args.teamId,
-        ulbId: args.ulbId,
-        timestamp: Date.now(),
-        lat: args.lat,
-        lng: args.lng,
-        source: args.source,
+    // 4. Record individual click event
+    await ctx.db.insert("clicks", {
+      teamMemberId: args.teamMemberId,
+      teamId: teamId,
+      ulbId: ulbId,
+      adminId: adminId,
+      timestamp: Date.now(),
+      lat: args.lat,
+      lng: args.lng,
+      source: args.source,
+    });
+  },
+});
+
+export const recordSharedClick = mutation({
+  args: {
+    teamMemberId: v.optional(v.id("teamMembers")),
+    userId: v.optional(v.id("users")),
+    teamId: v.optional(v.id("teams")),
+    ulbId: v.id("ulbs"),
+    source: v.string(),
+    fingerprint: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const FIVE_MINUTES = 5 * 60 * 1000;
+
+    // 1. Duplicate prevention check
+    const recentClick = await ctx.db
+      .query("clicks")
+      .withIndex("by_fingerprint", (q) => q.eq("fingerprint", args.fingerprint))
+      .filter((q) => q.gt(q.field("timestamp"), now - FIVE_MINUTES))
+      .first();
+
+    if (recentClick && (recentClick.teamMemberId === args.teamMemberId || recentClick.userId === args.userId)) {
+      return { status: "duplicate", id: recentClick._id };
+    }
+
+    // 2. Get context and increment stats
+    let teamId = args.teamId;
+    let adminId;
+
+    if (args.teamMemberId) {
+      const member = await ctx.db.get(args.teamMemberId);
+      if (!member) throw new Error("Member not found");
+      
+      teamId = teamId || member.teamId;
+      adminId = member.adminId;
+
+      await ctx.db.patch(args.teamMemberId, {
+        clickCount: (member.clickCount || 0) + 1,
+        todayCount: (member.todayCount || 0) + 1,
+      });
+    } else if (args.userId) {
+      const user = await ctx.db.get(args.userId);
+      if (!user) throw new Error("User not found");
+      
+      adminId = user.role === "admin" ? user._id : undefined;
+
+      await ctx.db.patch(args.userId, {
+        clickCount: (user.clickCount || 0) + 1,
       });
     }
+
+    // 3. Increment Team stats
+    if (teamId) {
+      const team = await ctx.db.get(teamId);
+      if (team) {
+        await ctx.db.patch(teamId, {
+          clickCount: (team.clickCount || 0) + 1,
+        });
+      }
+    }
+
+    // 4. Record the click
+    const clickId = await ctx.db.insert("clicks", {
+      teamMemberId: args.teamMemberId,
+      userId: args.userId,
+      teamId: teamId,
+      ulbId: args.ulbId,
+      adminId: adminId,
+      timestamp: now,
+      source: args.source,
+      fingerprint: args.fingerprint,
+    });
+
+    return { status: "recorded", id: clickId };
   },
 });
 
@@ -329,6 +418,7 @@ export const createPendingClick = mutation({
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
     source: v.string(),
+    fingerprint: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const member = await ctx.db.get(args.teamMemberId);
@@ -344,10 +434,11 @@ export const createPendingClick = mutation({
       source: args.source,
       timestamp: Date.now(),
       lastHeartbeat: Date.now(),
+      fingerprint: args.fingerprint,
     });
 
-    // Schedule validation after 60 seconds
-    await ctx.scheduler.runAfter(60000, api.teams.validatePendingClick, {
+    // Schedule validation after 15 seconds
+    await ctx.scheduler.runAfter(15000, api.teams.validatePendingClick, {
       pendingId,
     });
 
@@ -405,6 +496,7 @@ export const validatePendingClick = mutation({
         lat: pending.lat,
         lng: pending.lng,
         source: pending.source,
+        fingerprint: pending.fingerprint,
       });
 
       // --- Spam Detection Logic ---

@@ -66,7 +66,7 @@ export default function Dashboard() {
   );
 
   const trackingUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/track?teamMemberId=${user._id}&ulbId=${user.ulbId}`
+    ? `${window.location.origin}/track?${user.role === 'admin' ? 'userId' : 'teamMemberId'}=${user._id}&ulbId=${user.ulbId}`
     : "";
 
   return (

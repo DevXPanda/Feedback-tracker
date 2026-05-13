@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
-import { 
-  X, 
-  Copy, 
-  Check, 
-  Share2, 
-  MessageCircle, 
-  Facebook, 
+import {
+  X,
+  Copy,
+  Check,
+  Share2,
+  MessageCircle,
+  Facebook,
   Instagram,
   Send,
   Download
@@ -23,7 +23,7 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(trackingUrl);
+      await navigator.clipboard.writeText(trackingUrl + "&source=copied_link");
       setCopied(true);
       toast.success(t("dashboard.copy_success"));
       setTimeout(() => setCopied(false), 2000);
@@ -38,22 +38,22 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
       // Create a composite canvas for download
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      
+
       const width = 320;
       const height = 380;
       canvas.width = width;
       canvas.height = height;
-      
+
       // White background
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, width, height);
-      
+
       // Title
       ctx.fillStyle = "#111827"; // text-gray-900
       ctx.font = "bold 24px system-ui, -apple-system, sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("Give your feedback", width / 2, 50);
-      
+
       // Subtitle
       ctx.fillStyle = "#6b7280"; // text-gray-500
       ctx.font = "14px system-ui, -apple-system, sans-serif";
@@ -65,12 +65,12 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
         ctx.font = "bold 13px system-ui, -apple-system, sans-serif";
         ctx.fillText(`Tracking for: ${memberName}`, width / 2, height - 30);
       }
-      
+
       // Draw QR Code
       const qrSize = 200;
       const qrX = (width - qrSize) / 2;
       const qrY = 110;
-      
+
       // Ensure crisp scaling
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
@@ -89,23 +89,22 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
   };
 
   const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(t("modals.share_message").replace("{name}", memberName).replace("{url}", trackingUrl))}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(trackingUrl)}`,
-    // Instagram doesn't support direct URL sharing via web links for stories/posts, usually just profile link
-    instagram: `https://www.instagram.com/`, 
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(t("modals.share_message").replace("{name}", memberName).replace("{url}", trackingUrl + "&source=whatsapp"))}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(trackingUrl + "&source=facebook")}`,
+    instagram: `https://www.instagram.com/`,
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" 
+      <div
+        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
 
       {/* Modal */}
       <div className="relative w-full max-w-sm transform overflow-hidden rounded-3xl bg-white p-8 shadow-2xl transition-all animate-in fade-in zoom-in duration-200">
-        <button 
+        <button
           onClick={onClose}
           className="absolute right-6 top-6 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
         >
@@ -123,13 +122,13 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
         {/* Copy Section */}
         <div className="space-y-4 mb-8">
           <div className="relative">
-            <input 
+            <input
               readOnly
-              type="text" 
-              value={trackingUrl}
+              type="text"
+              value={trackingUrl + "&source=copied_link"}
               className="w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-xs font-medium text-gray-500 outline-none pr-12"
             />
-            <button 
+            <button
               onClick={handleCopy}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-white border border-gray-100 p-2 text-gray-500 hover:text-primary-600 shadow-sm transition-all active:scale-95"
             >
@@ -141,9 +140,9 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
         {/* QR Code Section */}
         <div className="flex flex-col items-center justify-center mb-8">
           <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm inline-block">
-            <QRCodeCanvas 
+            <QRCodeCanvas
               id="qr-code-canvas"
-              value={trackingUrl}
+              value={trackingUrl + "&source=qr"}
               size={140}
               bgColor={"#ffffff"}
               fgColor={"#111827"}
@@ -152,7 +151,7 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
               className="rounded-lg"
             />
           </div>
-          <button 
+          <button
             onClick={handleDownloadQR}
             className="mt-4 flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 hover:text-primary-600 hover:bg-primary-50 border border-gray-100 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95"
           >
@@ -163,22 +162,22 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
 
         {/* Social Buttons */}
         <div className="grid grid-cols-3 gap-4">
-          <SocialButton 
-            icon={MessageCircle} 
-            label="WHATSAPP" 
-            color="bg-[#25D366]" 
+          <SocialButton
+            icon={MessageCircle}
+            label="WHATSAPP"
+            color="bg-[#25D366]"
             onClick={() => window.open(shareLinks.whatsapp, '_blank')}
           />
-          <SocialButton 
-            icon={Facebook} 
-            label="FACEBOOK" 
-            color="bg-[#1877F2]" 
+          <SocialButton
+            icon={Facebook}
+            label="FACEBOOK"
+            color="bg-[#1877F2]"
             onClick={() => window.open(shareLinks.facebook, '_blank')}
           />
-          <SocialButton 
-            icon={Instagram} 
-            label="INSTAGRAM" 
-            color="bg-gradient-to-tr from-[#FFB700] via-[#FF0069] to-[#7600C5]" 
+          <SocialButton
+            icon={Instagram}
+            label="INSTAGRAM"
+            color="bg-gradient-to-tr from-[#FFB700] via-[#FF0069] to-[#7600C5]"
             onClick={() => window.open(shareLinks.instagram, '_blank')}
           />
         </div>
@@ -189,7 +188,7 @@ export default function ShareModal({ isOpen, onClose, trackingUrl, memberName })
 
 function SocialButton({ icon: Icon, label, color, onClick }) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className="flex flex-col items-center gap-2 group"
     >

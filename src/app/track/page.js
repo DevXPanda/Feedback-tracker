@@ -15,7 +15,7 @@ export default function TrackPage() {
 
 function TrackContent() {
   const searchParams = useSearchParams();
-  const createPendingClick = useMutation(api.teams.createPendingClick);
+  const recordSharedClick = useMutation(api.teams.recordSharedClick);
 
   useEffect(() => {
     let redirected = false;
@@ -25,45 +25,61 @@ function TrackContent() {
     searchParams.forEach((value, key) => {
       redirectUrl.searchParams.set(key, value);
     });
-    redirectUrl.searchParams.set("source", "shared");
+    
+    // Use existing source or default to "shared"
+    const source = searchParams.get("source") || "shared";
+    redirectUrl.searchParams.set("source", source);
 
-    const doRedirect = (trackingId) => {
+    const doRedirect = () => {
       if (redirected) return;
       redirected = true;
-      if (trackingId) {
-        redirectUrl.searchParams.set("trackingId", trackingId);
-      }
       // Instantly redirect without adding to history
       window.location.replace(redirectUrl.toString());
     };
 
-    // 2. Failsafe: Guarantee redirect within 300ms
+    // 2. Failsafe: Guarantee redirect within 400ms even if tracking is slow
     const failsafeTimer = setTimeout(() => {
       doRedirect();
-    }, 300);
+    }, 400);
 
-    // 3. Track click asynchronously
+    // 3. Track click asynchronously and immediately
     const track = async () => {
-      const teamId = searchParams.get("teamId");
-      const teamMemberId = searchParams.get("teamMemberId") || searchParams.get("memberId") || searchParams.get("userId");
-      const ulbId = searchParams.get("ulbId");
+      const rawMemberId = searchParams.get("teamMemberId") || searchParams.get("memberId") || searchParams.get("m");
+      const rawUserId = searchParams.get("userId") || searchParams.get("u_id");
+      const teamId = searchParams.get("teamId") || searchParams.get("t");
+      const ulbId = searchParams.get("ulbId") || searchParams.get("u");
 
-      if ((!teamMemberId && !teamId) || !ulbId) {
+      if (!rawMemberId && !rawUserId) {
+        doRedirect();
+        return;
+      }
+
+      if (!ulbId) {
         doRedirect();
         return;
       }
 
       try {
-        const pendingId = await createPendingClick({
+        // 1. Get or create a session-based fingerprint
+        let fingerprint = sessionStorage.getItem("feedback_fingerprint");
+        if (!fingerprint) {
+          fingerprint = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          sessionStorage.setItem("feedback_fingerprint", fingerprint);
+        }
+
+        // 2. Record the click immediately
+        await recordSharedClick({
           teamId: teamId || undefined,
-          teamMemberId: teamMemberId || undefined,
+          teamMemberId: rawMemberId || undefined,
+          userId: rawUserId || undefined,
           ulbId: ulbId,
-          source: "shared"
+          source: source,
+          fingerprint: fingerprint
         });
         
-        doRedirect(pendingId);
+        doRedirect();
       } catch (error) {
-        console.error("Silent tracking failed", error);
+        console.error("Tracking failed", error);
         doRedirect();
       }
     };
@@ -71,8 +87,8 @@ function TrackContent() {
     track();
 
     return () => clearTimeout(failsafeTimer);
-  }, [searchParams, createPendingClick]);
+  }, [searchParams, recordSharedClick]);
 
-  // 4. Return null to render absolutely no intermediate UI or blank screens
+  // 4. Return null to render absolutely no intermediate UI
   return null;
 }

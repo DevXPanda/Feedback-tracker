@@ -57,13 +57,15 @@ export default defineSchema({
     lng: v.optional(v.number()),
     source: v.optional(v.string()), // "direct" or "shared"
     status: v.optional(v.string()), // e.g. "completed"
+    fingerprint: v.optional(v.string()), // For duplicate prevention
   })
     .index("by_team_member", ["teamMemberId", "timestamp"])
     .index("by_user", ["userId", "timestamp"])
     .index("by_team", ["teamId", "timestamp"])
     .index("by_timestamp", ["timestamp"])
     .index("by_ulb", ["ulbId"])
-    .index("by_admin", ["adminId"]),
+    .index("by_admin", ["adminId"])
+    .index("by_fingerprint", ["fingerprint"]),
 
   targets: defineTable({
     target: v.number(),
@@ -94,6 +96,7 @@ export default defineSchema({
     lng: v.optional(v.number()),
     source: v.string(),
     lastHeartbeat: v.number(),
+    fingerprint: v.optional(v.string()),
   }).index("by_ulb", ["ulbId"]).index("by_team_member", ["teamMemberId"]).index("by_admin", ["adminId"]),
 
   locationFlags: defineTable({
